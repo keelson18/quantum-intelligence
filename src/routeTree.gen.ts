@@ -9,61 +9,352 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as ShellRouteImport } from './routes/_shell'
+import { Route as ShellIndexRouteImport } from './routes/_shell/index'
+import { Route as ShellAiCenterRouteImport } from './routes/_shell/ai-center'
+import { Route as ShellBacktestingRouteImport } from './routes/_shell/backtesting'
+import { Route as ShellJournalRouteImport } from './routes/_shell/journal'
+import { Route as ShellLearningRouteImport } from './routes/_shell/learning'
+import { Route as ShellNewsRouteImport } from './routes/_shell/news'
+import { Route as ShellPatternsRouteImport } from './routes/_shell/patterns'
+import { Route as ShellPortfolioRouteImport } from './routes/_shell/portfolio'
+import { Route as ShellResearchRouteImport } from './routes/_shell/research'
+import { Route as ShellRiskRouteImport } from './routes/_shell/risk'
+import { Route as ShellScannerRouteImport } from './routes/_shell/scanner'
+import { Route as ShellSettingsRouteImport } from './routes/_shell/settings'
+import { Route as ShellTerminalRouteImport } from './routes/_shell/terminal'
+import { Route as ShellWatchlistRouteImport } from './routes/_shell/watchlist'
 
-const IndexRoute = IndexRouteImport.update({
+const ShellRoute = ShellRouteImport.update({
+  id: '/_shell',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShellIndexRoute = ShellIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellAiCenterRoute = ShellAiCenterRouteImport.update({
+  id: '/ai-center',
+  path: '/ai-center',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellBacktestingRoute = ShellBacktestingRouteImport.update({
+  id: '/backtesting',
+  path: '/backtesting',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellJournalRoute = ShellJournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellLearningRoute = ShellLearningRouteImport.update({
+  id: '/learning',
+  path: '/learning',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellNewsRoute = ShellNewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellPatternsRoute = ShellPatternsRouteImport.update({
+  id: '/patterns',
+  path: '/patterns',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellPortfolioRoute = ShellPortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellResearchRoute = ShellResearchRouteImport.update({
+  id: '/research',
+  path: '/research',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellRiskRoute = ShellRiskRouteImport.update({
+  id: '/risk',
+  path: '/risk',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellScannerRoute = ShellScannerRouteImport.update({
+  id: '/scanner',
+  path: '/scanner',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellSettingsRoute = ShellSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellTerminalRoute = ShellTerminalRouteImport.update({
+  id: '/terminal',
+  path: '/terminal',
+  getParentRoute: () => ShellRoute,
+} as any)
+const ShellWatchlistRoute = ShellWatchlistRouteImport.update({
+  id: '/watchlist',
+  path: '/watchlist',
+  getParentRoute: () => ShellRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof ShellIndexRoute
+  '/ai-center': typeof ShellAiCenterRoute
+  '/backtesting': typeof ShellBacktestingRoute
+  '/journal': typeof ShellJournalRoute
+  '/learning': typeof ShellLearningRoute
+  '/news': typeof ShellNewsRoute
+  '/patterns': typeof ShellPatternsRoute
+  '/portfolio': typeof ShellPortfolioRoute
+  '/research': typeof ShellResearchRoute
+  '/risk': typeof ShellRiskRoute
+  '/scanner': typeof ShellScannerRoute
+  '/settings': typeof ShellSettingsRoute
+  '/terminal': typeof ShellTerminalRoute
+  '/watchlist': typeof ShellWatchlistRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/ai-center': typeof ShellAiCenterRoute
+  '/backtesting': typeof ShellBacktestingRoute
+  '/journal': typeof ShellJournalRoute
+  '/learning': typeof ShellLearningRoute
+  '/news': typeof ShellNewsRoute
+  '/patterns': typeof ShellPatternsRoute
+  '/portfolio': typeof ShellPortfolioRoute
+  '/research': typeof ShellResearchRoute
+  '/risk': typeof ShellRiskRoute
+  '/scanner': typeof ShellScannerRoute
+  '/settings': typeof ShellSettingsRoute
+  '/terminal': typeof ShellTerminalRoute
+  '/watchlist': typeof ShellWatchlistRoute
+  '/': typeof ShellIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_shell': typeof ShellRouteWithChildren
+  '/_shell/ai-center': typeof ShellAiCenterRoute
+  '/_shell/backtesting': typeof ShellBacktestingRoute
+  '/_shell/journal': typeof ShellJournalRoute
+  '/_shell/learning': typeof ShellLearningRoute
+  '/_shell/news': typeof ShellNewsRoute
+  '/_shell/patterns': typeof ShellPatternsRoute
+  '/_shell/portfolio': typeof ShellPortfolioRoute
+  '/_shell/research': typeof ShellResearchRoute
+  '/_shell/risk': typeof ShellRiskRoute
+  '/_shell/scanner': typeof ShellScannerRoute
+  '/_shell/settings': typeof ShellSettingsRoute
+  '/_shell/terminal': typeof ShellTerminalRoute
+  '/_shell/watchlist': typeof ShellWatchlistRoute
+  '/_shell/': typeof ShellIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/ai-center'
+    | '/backtesting'
+    | '/journal'
+    | '/learning'
+    | '/news'
+    | '/patterns'
+    | '/portfolio'
+    | '/research'
+    | '/risk'
+    | '/scanner'
+    | '/settings'
+    | '/terminal'
+    | '/watchlist'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/ai-center'
+    | '/backtesting'
+    | '/journal'
+    | '/learning'
+    | '/news'
+    | '/patterns'
+    | '/portfolio'
+    | '/research'
+    | '/risk'
+    | '/scanner'
+    | '/settings'
+    | '/terminal'
+    | '/watchlist'
+    | '/'
+  id:
+    | '__root__'
+    | '/_shell'
+    | '/_shell/ai-center'
+    | '/_shell/backtesting'
+    | '/_shell/journal'
+    | '/_shell/learning'
+    | '/_shell/news'
+    | '/_shell/patterns'
+    | '/_shell/portfolio'
+    | '/_shell/research'
+    | '/_shell/risk'
+    | '/_shell/scanner'
+    | '/_shell/settings'
+    | '/_shell/terminal'
+    | '/_shell/watchlist'
+    | '/_shell/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  ShellRoute: typeof ShellRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_shell': {
+      id: '/_shell'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof ShellRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_shell/': {
+      id: '/_shell/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ShellIndexRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/ai-center': {
+      id: '/_shell/ai-center'
+      path: '/ai-center'
+      fullPath: '/ai-center'
+      preLoaderRoute: typeof ShellAiCenterRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/backtesting': {
+      id: '/_shell/backtesting'
+      path: '/backtesting'
+      fullPath: '/backtesting'
+      preLoaderRoute: typeof ShellBacktestingRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/journal': {
+      id: '/_shell/journal'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof ShellJournalRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/learning': {
+      id: '/_shell/learning'
+      path: '/learning'
+      fullPath: '/learning'
+      preLoaderRoute: typeof ShellLearningRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/news': {
+      id: '/_shell/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof ShellNewsRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/patterns': {
+      id: '/_shell/patterns'
+      path: '/patterns'
+      fullPath: '/patterns'
+      preLoaderRoute: typeof ShellPatternsRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/portfolio': {
+      id: '/_shell/portfolio'
+      path: '/portfolio'
+      fullPath: '/portfolio'
+      preLoaderRoute: typeof ShellPortfolioRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/research': {
+      id: '/_shell/research'
+      path: '/research'
+      fullPath: '/research'
+      preLoaderRoute: typeof ShellResearchRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/risk': {
+      id: '/_shell/risk'
+      path: '/risk'
+      fullPath: '/risk'
+      preLoaderRoute: typeof ShellRiskRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/scanner': {
+      id: '/_shell/scanner'
+      path: '/scanner'
+      fullPath: '/scanner'
+      preLoaderRoute: typeof ShellScannerRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/settings': {
+      id: '/_shell/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof ShellSettingsRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/terminal': {
+      id: '/_shell/terminal'
+      path: '/terminal'
+      fullPath: '/terminal'
+      preLoaderRoute: typeof ShellTerminalRouteImport
+      parentRoute: typeof ShellRoute
+    }
+    '/_shell/watchlist': {
+      id: '/_shell/watchlist'
+      path: '/watchlist'
+      fullPath: '/watchlist'
+      preLoaderRoute: typeof ShellWatchlistRouteImport
+      parentRoute: typeof ShellRoute
     }
   }
 }
 
+interface ShellRouteChildren {
+  ShellAiCenterRoute: typeof ShellAiCenterRoute
+  ShellBacktestingRoute: typeof ShellBacktestingRoute
+  ShellJournalRoute: typeof ShellJournalRoute
+  ShellLearningRoute: typeof ShellLearningRoute
+  ShellNewsRoute: typeof ShellNewsRoute
+  ShellPatternsRoute: typeof ShellPatternsRoute
+  ShellPortfolioRoute: typeof ShellPortfolioRoute
+  ShellResearchRoute: typeof ShellResearchRoute
+  ShellRiskRoute: typeof ShellRiskRoute
+  ShellScannerRoute: typeof ShellScannerRoute
+  ShellSettingsRoute: typeof ShellSettingsRoute
+  ShellTerminalRoute: typeof ShellTerminalRoute
+  ShellWatchlistRoute: typeof ShellWatchlistRoute
+  ShellIndexRoute: typeof ShellIndexRoute
+}
+
+const ShellRouteChildren: ShellRouteChildren = {
+  ShellAiCenterRoute: ShellAiCenterRoute,
+  ShellBacktestingRoute: ShellBacktestingRoute,
+  ShellJournalRoute: ShellJournalRoute,
+  ShellLearningRoute: ShellLearningRoute,
+  ShellNewsRoute: ShellNewsRoute,
+  ShellPatternsRoute: ShellPatternsRoute,
+  ShellPortfolioRoute: ShellPortfolioRoute,
+  ShellResearchRoute: ShellResearchRoute,
+  ShellRiskRoute: ShellRiskRoute,
+  ShellScannerRoute: ShellScannerRoute,
+  ShellSettingsRoute: ShellSettingsRoute,
+  ShellTerminalRoute: ShellTerminalRoute,
+  ShellWatchlistRoute: ShellWatchlistRoute,
+  ShellIndexRoute: ShellIndexRoute,
+}
+
+const ShellRouteWithChildren = ShellRoute._addFileChildren(ShellRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  ShellRoute: ShellRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
