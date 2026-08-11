@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Newspaper, Search, TrendingUp, TrendingDown, Minus, ExternalLink, Clock, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { getNews } from '../lib/ai.functions';
 
 interface NewsItem {
   id: string;
@@ -34,15 +35,15 @@ export default function NewsPage() {
       setNews(cached as NewsItem[]);
       setLoading(false);
       // Refresh in background via edge function
-      supabase.functions.invoke('news-feed').catch(() => {});
+      getNews().catch(() => {});
       return;
     }
 
     // No cached data — call edge function directly
-    const { data: fnData, error } = await supabase.functions.invoke('news-feed');
-    if (!error && fnData?.news) {
-      setNews(fnData.news as NewsItem[]);
-    } else {
+    try {
+      const fnData = await getNews();
+      setNews((fnData?.news ?? []) as NewsItem[]);
+    } catch {
       setNews([]);
     }
     setLoading(false);

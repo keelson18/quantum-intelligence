@@ -9,15 +9,21 @@ interface ThemeCtx {
 const Ctx = createContext<ThemeCtx>({ theme: 'dark', toggle: () => {} });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('qi-theme') as Theme | null;
-    return saved ?? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-  });
+  // Server render has no storage; resolve the real preference after hydration.
+  const [theme, setTheme] = useState<Theme>('dark');
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    const saved = localStorage.getItem('qi-theme') as Theme | null;
+    setTheme(saved ?? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
     document.documentElement.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('qi-theme', theme);
-  }, [theme]);
+  }, [theme, hydrated]);
 
   return (
     <Ctx.Provider value={{ theme, toggle: () => setTheme((t) => (t === 'dark' ? 'light' : 'dark')) }}>
