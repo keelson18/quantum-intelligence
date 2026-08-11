@@ -5,9 +5,7 @@ import AuthScreen from "@/components/AuthScreen";
 import { useAuth } from "@/context/AuthContext";
 import { SidebarProvider } from "@/context/SidebarContext";
 
-// Session lives in browser storage, so this subtree renders client-side only.
 export const Route = createFileRoute("/_shell")({
-  ssr: false,
   component: ShellLayout,
 });
 
