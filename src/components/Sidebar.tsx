@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import {
   LayoutDashboard, Terminal, BrainCircuit, Radar, ScanSearch, BarChart3,
   Wallet, ShieldAlert, Newspaper, GraduationCap, Microscope, Settings,
@@ -71,24 +71,19 @@ export default function Sidebar() {
         {visibleItems.map((item) => {
           const Icon = item.icon;
           return (
-            <NavLink
+            <Link
               key={item.to}
               to={item.to}
-              end={item.to === '/'}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg transition-colors group ${
-                  collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'
-                } ${
-                  isActive
-                    ? 'bg-primary/15 text-primary'
-                    : 'text-muted hover:bg-bg hover:text-text'
-                }`
-              }
+              activeOptions={{ exact: item.to === '/' }}
+              className={`flex items-center gap-3 rounded-lg transition-colors group ${
+                collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'
+              } text-muted hover:bg-bg hover:text-text`}
+              activeProps={{ className: 'bg-primary/15 text-primary hover:bg-primary/15 hover:text-primary' }}
               title={collapsed ? item.label : undefined}
             >
               <Icon className="w-4 h-4 shrink-0" />
               {!collapsed && <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>}
-            </NavLink>
+            </Link>
           );
         })}
       </nav>
