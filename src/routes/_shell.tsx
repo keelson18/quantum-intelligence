@@ -24,7 +24,7 @@ function ShellLayout() {
   const { session, loading } = useAuth();
 
   if (loading) return <LoadingScreen />;
-  if (!session && false) return <AuthScreen />;
+  if (!session) return <AuthScreen />;
 
   return (
     <SidebarProvider>
