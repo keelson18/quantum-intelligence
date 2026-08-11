@@ -270,12 +270,13 @@ async function fetchCandles(symbol: string, timeframe: string, limit = 1000): Pr
   }));
 }
 
-async function checkRate(supabase: SupabaseClient, key: string, maxPerMin: number): Promise<boolean> {
+export async function checkRate(supabase: AdminClient, key: string, maxPerMin: number): Promise<boolean> {
   const now = Date.now();
   const windowStart = new Date(now - 60000).toISOString();
   const { data } = await supabase.from('ml_predictions').select('created_at').eq('symbol', `__rl__${key}`).gte('created_at', windowStart);
   return (data?.length ?? 0) < maxPerMin;
 }
+
 
 async function retrainInternal(supabase: AdminClient, symbol: string, timeframe: string): Promise<{ ok: boolean; metrics: MetricsSummary; version: string }> {
   const candles = await fetchCandles(symbol, timeframe, 1000);
