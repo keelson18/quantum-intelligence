@@ -14,7 +14,985 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_models: {
+        Row: {
+          architecture: string
+          created_at: string
+          hyperparams: Json
+          id: string
+          input_features: string[]
+          metrics: Json
+          name: string
+          output_classes: string[]
+          status: string
+          trained_at: string | null
+          user_id: string
+        }
+        Insert: {
+          architecture: string
+          created_at?: string
+          hyperparams?: Json
+          id?: string
+          input_features?: string[]
+          metrics?: Json
+          name: string
+          output_classes?: string[]
+          status?: string
+          trained_at?: string | null
+          user_id?: string
+        }
+        Update: {
+          architecture?: string
+          created_at?: string
+          hyperparams?: Json
+          id?: string
+          input_features?: string[]
+          metrics?: Json
+          name?: string
+          output_classes?: string[]
+          status?: string
+          trained_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_predictions: {
+        Row: {
+          confidence: number
+          created_at: string
+          id: string
+          input: Json
+          model_id: string | null
+          output: Json
+          symbol: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          input?: Json
+          model_id?: string | null
+          output?: Json
+          symbol: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          input?: Json
+          model_id?: string | null
+          output?: Json
+          symbol?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_predictions_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "ai_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_training_data: {
+        Row: {
+          created_at: string
+          features: Json
+          id: string
+          label: number
+          label_type: string
+          source: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          features?: Json
+          id?: string
+          label?: number
+          label_type?: string
+          source?: string
+          symbol: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          features?: Json
+          id?: string
+          label?: number
+          label_type?: string
+          source?: string
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      alert_rules: {
+        Row: {
+          condition: string
+          created_at: string | null
+          enabled: boolean
+          id: string
+          message: string
+          metadata: Json | null
+          severity: string
+          symbol: string
+          threshold: number | null
+          triggered_at: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          condition?: string
+          created_at?: string | null
+          enabled?: boolean
+          id?: string
+          message?: string
+          metadata?: Json | null
+          severity?: string
+          symbol: string
+          threshold?: number | null
+          triggered_at?: string | null
+          type: string
+          user_id?: string
+        }
+        Update: {
+          condition?: string
+          created_at?: string | null
+          enabled?: boolean
+          id?: string
+          message?: string
+          metadata?: Json | null
+          severity?: string
+          symbol?: string
+          threshold?: number | null
+          triggered_at?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      alerts: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          metadata: Json
+          read: boolean
+          severity: string
+          symbol: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json
+          read?: boolean
+          severity?: string
+          symbol: string
+          type: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          read?: boolean
+          severity?: string
+          symbol?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json
+          resource: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          resource?: string
+          user_id?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          resource?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      backtest_results: {
+        Row: {
+          created_at: string
+          id: string
+          last_run: string
+          metrics: Json
+          monte_carlo: Json
+          strategy: string
+          symbol: string
+          timeframe: string
+          user_id: string | null
+          walk_forward: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_run?: string
+          metrics?: Json
+          monte_carlo?: Json
+          strategy: string
+          symbol: string
+          timeframe: string
+          user_id?: string | null
+          walk_forward?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_run?: string
+          metrics?: Json
+          monte_carlo?: Json
+          strategy?: string
+          symbol?: string
+          timeframe?: string
+          user_id?: string | null
+          walk_forward?: Json
+        }
+        Relationships: []
+      }
+      journal_entries: {
+        Row: {
+          created_at: string | null
+          id: string
+          lessons_learned: string
+          mood: string | null
+          notes: string
+          screenshot_url: string | null
+          symbol: string
+          tags: string[] | null
+          title: string
+          trade_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lessons_learned?: string
+          mood?: string | null
+          notes?: string
+          screenshot_url?: string | null
+          symbol: string
+          tags?: string[] | null
+          title?: string
+          trade_id?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lessons_learned?: string
+          mood?: string | null
+          notes?: string
+          screenshot_url?: string | null
+          symbol?: string
+          tags?: string[] | null
+          title?: string
+          trade_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ml_predictions: {
+        Row: {
+          confidence: string
+          created_at: string
+          expected_move_pct: number
+          id: string
+          model_version: string
+          payload: Json
+          prediction: string
+          probability: number
+          symbol: string
+          timeframe: string
+        }
+        Insert: {
+          confidence?: string
+          created_at?: string
+          expected_move_pct?: number
+          id?: string
+          model_version: string
+          payload?: Json
+          prediction: string
+          probability: number
+          symbol: string
+          timeframe: string
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          expected_move_pct?: number
+          id?: string
+          model_version?: string
+          payload?: Json
+          prediction?: string
+          probability?: number
+          symbol?: string
+          timeframe?: string
+        }
+        Relationships: []
+      }
+      news_items: {
+        Row: {
+          created_at: string
+          headline: string
+          id: string
+          published_at: string
+          sentiment: string
+          sentiment_score: number
+          source: string
+          summary: string
+          symbols: string[]
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          headline: string
+          id?: string
+          published_at?: string
+          sentiment?: string
+          sentiment_score?: number
+          source?: string
+          summary?: string
+          symbols?: string[]
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          headline?: string
+          id?: string
+          published_at?: string
+          sentiment?: string
+          sentiment_score?: number
+          source?: string
+          summary?: string
+          symbols?: string[]
+          url?: string | null
+        }
+        Relationships: []
+      }
+      paper_positions: {
+        Row: {
+          ai_confidence: number | null
+          close_price: number | null
+          closed_at: string | null
+          created_at: string | null
+          entry_price: number
+          id: string
+          label: string
+          limit_price: number | null
+          notes: string | null
+          opened_at: string | null
+          order_type: string
+          pnl: number | null
+          pnl_pct: number | null
+          quantity: number
+          side: string
+          status: string
+          stop_loss: number | null
+          strategy: string | null
+          symbol: string
+          take_profit: number | null
+          trailing_stop_pct: number | null
+          user_id: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          close_price?: number | null
+          closed_at?: string | null
+          created_at?: string | null
+          entry_price?: number
+          id?: string
+          label: string
+          limit_price?: number | null
+          notes?: string | null
+          opened_at?: string | null
+          order_type?: string
+          pnl?: number | null
+          pnl_pct?: number | null
+          quantity?: number
+          side?: string
+          status?: string
+          stop_loss?: number | null
+          strategy?: string | null
+          symbol: string
+          take_profit?: number | null
+          trailing_stop_pct?: number | null
+          user_id?: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          close_price?: number | null
+          closed_at?: string | null
+          created_at?: string | null
+          entry_price?: number
+          id?: string
+          label?: string
+          limit_price?: number | null
+          notes?: string | null
+          opened_at?: string | null
+          order_type?: string
+          pnl?: number | null
+          pnl_pct?: number | null
+          quantity?: number
+          side?: string
+          status?: string
+          stop_loss?: number | null
+          strategy?: string | null
+          symbol?: string
+          take_profit?: number | null
+          trailing_stop_pct?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      paper_trades: {
+        Row: {
+          ai_confidence: number | null
+          created_at: string | null
+          entry_price: number
+          entry_time: string | null
+          exit_price: number
+          exit_reason: string
+          exit_time: string | null
+          hold_duration_hours: number | null
+          id: string
+          label: string
+          pnl: number
+          pnl_pct: number
+          quantity: number
+          side: string
+          strategy: string | null
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          created_at?: string | null
+          entry_price?: number
+          entry_time?: string | null
+          exit_price?: number
+          exit_reason?: string
+          exit_time?: string | null
+          hold_duration_hours?: number | null
+          id?: string
+          label: string
+          pnl?: number
+          pnl_pct?: number
+          quantity?: number
+          side: string
+          strategy?: string | null
+          symbol: string
+          user_id?: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          created_at?: string | null
+          entry_price?: number
+          entry_time?: string | null
+          exit_price?: number
+          exit_reason?: string
+          exit_time?: string | null
+          hold_duration_hours?: number | null
+          id?: string
+          label?: string
+          pnl?: number
+          pnl_pct?: number
+          quantity?: number
+          side?: string
+          strategy?: string | null
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      performance_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          max_drawdown: number | null
+          sharpe: number | null
+          snapshot_at: string
+          total_pnl: number
+          user_id: string
+          win_rate: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_drawdown?: number | null
+          sharpe?: number | null
+          snapshot_at?: string
+          total_pnl?: number
+          user_id?: string
+          win_rate?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_drawdown?: number | null
+          sharpe?: number | null
+          snapshot_at?: string
+          total_pnl?: number
+          user_id?: string
+          win_rate?: number
+        }
+        Relationships: []
+      }
+      positions: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          entry_price: number
+          id: string
+          opened_at: string
+          side: string
+          size: number
+          status: string
+          stop_loss: number | null
+          symbol: string
+          take_profit: number | null
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          entry_price: number
+          id?: string
+          opened_at?: string
+          side: string
+          size: number
+          status?: string
+          stop_loss?: number | null
+          symbol: string
+          take_profit?: number | null
+          user_id?: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          entry_price?: number
+          id?: string
+          opened_at?: string
+          side?: string
+          size?: number
+          status?: string
+          stop_loss?: number | null
+          symbol?: string
+          take_profit?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string
+          first_name?: string
+          id: string
+          last_name?: string
+          phone?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string
+        }
+        Relationships: []
+      }
+      risk_state: {
+        Row: {
+          created_at: string
+          current_exposure_pct: number
+          daily_loss_used: number
+          equity: number
+          id: string
+          max_daily_loss_pct: number
+          max_drawdown_pct: number
+          max_exposure_pct: number
+          open_positions: Json
+          peak_equity: number
+          starting_equity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_exposure_pct?: number
+          daily_loss_used?: number
+          equity?: number
+          id?: string
+          max_daily_loss_pct?: number
+          max_drawdown_pct?: number
+          max_exposure_pct?: number
+          open_positions?: Json
+          peak_equity?: number
+          starting_equity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          current_exposure_pct?: number
+          daily_loss_used?: number
+          equity?: number
+          id?: string
+          max_daily_loss_pct?: number
+          max_drawdown_pct?: number
+          max_exposure_pct?: number
+          open_positions?: Json
+          peak_equity?: number
+          starting_equity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      strategy_results: {
+        Row: {
+          confidence: number
+          created_at: string
+          id: string
+          last_run: string
+          payload: Json
+          sample_size: number
+          strategy: string
+          symbol: string
+          timeframe: string
+          user_id: string | null
+          win_rate: number
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          id?: string
+          last_run?: string
+          payload?: Json
+          sample_size?: number
+          strategy: string
+          symbol: string
+          timeframe: string
+          user_id?: string | null
+          win_rate: number
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          last_run?: string
+          payload?: Json
+          sample_size?: number
+          strategy?: string
+          symbol?: string
+          timeframe?: string
+          user_id?: string | null
+          win_rate?: number
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          plan: string
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan?: string
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan?: string
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trade_logs: {
+        Row: {
+          closed_at: string | null
+          confidence: number
+          created_at: string
+          entry: number
+          exit: number | null
+          explanation: Json
+          id: string
+          opened_at: string
+          pnl: number
+          pnl_pct: number
+          regime: string | null
+          side: string
+          size: number
+          status: string
+          stop_loss: number | null
+          strategy: string
+          symbol: string
+          take_profit: number | null
+          timeframe: string
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          confidence?: number
+          created_at?: string
+          entry: number
+          exit?: number | null
+          explanation?: Json
+          id?: string
+          opened_at?: string
+          pnl?: number
+          pnl_pct?: number
+          regime?: string | null
+          side: string
+          size?: number
+          status?: string
+          stop_loss?: number | null
+          strategy: string
+          symbol: string
+          take_profit?: number | null
+          timeframe: string
+          user_id?: string
+        }
+        Update: {
+          closed_at?: string | null
+          confidence?: number
+          created_at?: string
+          entry?: number
+          exit?: number | null
+          explanation?: Json
+          id?: string
+          opened_at?: string
+          pnl?: number
+          pnl_pct?: number
+          regime?: string | null
+          side?: string
+          size?: number
+          status?: string
+          stop_loss?: number | null
+          strategy?: string
+          symbol?: string
+          take_profit?: number | null
+          timeframe?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trades: {
+        Row: {
+          created_at: string
+          executed_at: string
+          fee: number
+          id: string
+          pnl: number
+          price: number
+          side: string
+          size: number
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          executed_at?: string
+          fee?: number
+          id?: string
+          pnl?: number
+          price: number
+          side: string
+          size: number
+          symbol: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          executed_at?: string
+          fee?: number
+          id?: string
+          pnl?: number
+          price?: number
+          side?: string
+          size?: number
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          default_timeframe: string
+          id: string
+          notif_ai_signals: boolean
+          notif_price_alerts: boolean
+          notif_risk_warnings: boolean
+          notif_strategy_triggers: boolean
+          risk_tolerance: string
+          theme: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_timeframe?: string
+          id?: string
+          notif_ai_signals?: boolean
+          notif_price_alerts?: boolean
+          notif_risk_warnings?: boolean
+          notif_strategy_triggers?: boolean
+          risk_tolerance?: string
+          theme?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          default_timeframe?: string
+          id?: string
+          notif_ai_signals?: boolean
+          notif_price_alerts?: boolean
+          notif_risk_warnings?: boolean
+          notif_strategy_triggers?: boolean
+          risk_tolerance?: string
+          theme?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watchlist_items: {
+        Row: {
+          added_at: string | null
+          display_order: number
+          id: string
+          label: string
+          market: string
+          symbol: string
+          watchlist_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          display_order?: number
+          id?: string
+          label: string
+          market?: string
+          symbol: string
+          watchlist_id: string
+        }
+        Update: {
+          added_at?: string | null
+          display_order?: number
+          id?: string
+          label?: string
+          market?: string
+          symbol?: string
+          watchlist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watchlist_items_watchlist_id_fkey"
+            columns: ["watchlist_id"]
+            isOneToOne: false
+            referencedRelation: "watchlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      watchlists: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          is_default: boolean
+          name: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          user_id?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
