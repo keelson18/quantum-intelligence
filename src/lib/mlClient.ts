@@ -1,30 +1,16 @@
 import type { MLPrediction, Timeframe } from './types';
 import { supabase } from './supabase';
+import { predictML, askCoachFn } from './ai.functions';
 
-const ML_KEY = 'qi-ml-default-key';
-
-// Call the ML prediction edge function. Falls back gracefully on error.
+// Ask the server to run a fresh ML prediction. Falls back gracefully on error.
 export async function fetchMLPrediction(symbol: string, timeframe: Timeframe): Promise<MLPrediction | null> {
   try {
-    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ml-predict/predict`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        'x-api-key': ML_KEY,
-      },
-      body: JSON.stringify({ pair: symbol, timeframe }),
-    });
-    if (!res.ok) {
-      console.warn('ML predict failed', res.status);
-      return null;
-    }
-    const data = await res.json();
-    if (!data || data.error) return null;
+    const res = await predictML({ data: { pair: symbol, timeframe } });
+    if ('error' in res || !res.prediction) return null;
+    const data = res.prediction;
     return {
       pair: data.pair,
-      timeframe: data.timeframe,
+      timeframe: data.timeframe as Timeframe,
       prediction: data.prediction,
       probability: data.probability,
       expected_move_pct: data.expected_move_pct,
@@ -60,16 +46,7 @@ export async function fetchCachedMLPrediction(symbol: string, timeframe: Timefra
 export interface CoachMessage { role: 'user' | 'assistant'; content: string }
 
 export async function askCoach(messages: CoachMessage[]): Promise<string> {
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kinetic-coach`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-    },
-    body: JSON.stringify({ messages }),
-  });
-  if (!res.ok) throw new Error(`Coach failed (${res.status})`);
-  const data = await res.json();
-  return data.reply ?? data.error ?? 'No response.';
+  const res = await askCoachFn({ data: { messages } });
+  if ('error' in res && res.error) throw new Error(res.error);
+  return ('reply' in res ? res.reply : null) ?? 'No response.';
 }
