@@ -145,7 +145,7 @@ export async function refreshNews(admin: AdminClient) {
     });
 
     // Insert (ignore conflicts on URL uniqueness)
-    const { error: insertError } = await supabase
+    const { error: insertError } = await admin
       .from('news_items')
       .upsert(records, { onConflict: 'url', ignoreDuplicates: true });
 
