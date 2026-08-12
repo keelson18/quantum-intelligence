@@ -208,6 +208,63 @@ export type Database = {
         }
         Relationships: []
       }
+      analysis_runs: {
+        Row: {
+          action: string
+          confidence: number
+          context_id: string
+          contradictions: Json
+          created_at: string
+          data_quality_score: number
+          engine_versions: Json
+          explanation: Json | null
+          id: string
+          position_multiplier: number
+          raw_confidence: number
+          reasons: Json
+          risk_violations: Json
+          symbol: string
+          timeframe: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          confidence?: number
+          context_id: string
+          contradictions?: Json
+          created_at?: string
+          data_quality_score?: number
+          engine_versions?: Json
+          explanation?: Json | null
+          id?: string
+          position_multiplier?: number
+          raw_confidence?: number
+          reasons?: Json
+          risk_violations?: Json
+          symbol: string
+          timeframe: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          confidence?: number
+          context_id?: string
+          contradictions?: Json
+          created_at?: string
+          data_quality_score?: number
+          engine_versions?: Json
+          explanation?: Json | null
+          id?: string
+          position_multiplier?: number
+          raw_confidence?: number
+          reasons?: Json
+          risk_violations?: Json
+          symbol?: string
+          timeframe?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -276,6 +333,98 @@ export type Database = {
           walk_forward?: Json
         }
         Relationships: []
+      }
+      data_quality_events: {
+        Row: {
+          code: string
+          created_at: string
+          detail: string | null
+          id: string
+          occurrences: number
+          quality_score: number
+          severity: string
+          symbol: string
+          timeframe: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          occurrences?: number
+          quality_score?: number
+          severity: string
+          symbol: string
+          timeframe: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          occurrences?: number
+          quality_score?: number
+          severity?: string
+          symbol?: string
+          timeframe?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      engine_results: {
+        Row: {
+          confidence: number
+          created_at: string
+          engine_name: string
+          engine_version: string
+          evidence: Json
+          id: string
+          input_context_id: string
+          latency_ms: number
+          run_id: string
+          status: string
+          user_id: string
+          warnings: Json
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          engine_name: string
+          engine_version: string
+          evidence?: Json
+          id?: string
+          input_context_id: string
+          latency_ms?: number
+          run_id: string
+          status: string
+          user_id: string
+          warnings?: Json
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          engine_name?: string
+          engine_version?: string
+          evidence?: Json
+          id?: string
+          input_context_id?: string
+          latency_ms?: number
+          run_id?: string
+          status?: string
+          user_id?: string
+          warnings?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engine_results_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "analysis_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       journal_entries: {
         Row: {
