@@ -317,6 +317,9 @@ export default function Dashboard() {
                 </div>
               )}
 
+              {/* Master decision: data quality, risk gate, contradictions */}
+              <MasterDecisionPanel decision={master} />
+
               {/* Recommendation with risk + contributors */}
               {rec && <RecommendationCard rec={rec} />}
 
