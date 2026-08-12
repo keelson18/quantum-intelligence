@@ -10,6 +10,9 @@ import {
 } from '../lib/types';
 import { fetchKlines, subscribeKlines } from '../lib/binance';
 import { makeDecision, type DecisionResult } from '../lib/decision';
+import { runMasterDecision, type MasterDecision } from '../lib/engines/masterDecision';
+import { recordMasterDecision } from '../lib/intelligenceClient';
+import MasterDecisionPanel from './MasterDecisionPanel';
 import { fetchMLPrediction, fetchCachedMLPrediction } from '../lib/mlClient';
 import { runBacktest, walkForward, monteCarlo, DEFAULT_BACKTEST } from '../lib/backtest';
 import type { BacktestMetrics, MonteCarloResult, WalkForwardResult } from '../lib/types';
