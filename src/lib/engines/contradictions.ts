@@ -53,7 +53,7 @@ export function findContradictions(
     }
 
     const regime = institutional.granularRegime;
-    const rangeBound = regime === 'ranging_tight' || regime === 'ranging_wide' || regime === 'choppy';
+    const rangeBound = regime === 'range_bound' || regime === 'low_volatility' || regime === 'accumulation' || regime === 'distribution';
     if (rangeBound && institutional.marketContext.trendStrength > 0.6) {
       out.push({
         code: 'regime_incompatibility',
