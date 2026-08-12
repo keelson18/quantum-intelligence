@@ -10,6 +10,9 @@ import {
 } from '../lib/types';
 import { fetchKlines, subscribeKlines } from '../lib/binance';
 import { makeDecision, type DecisionResult } from '../lib/decision';
+import { runMasterDecision, type MasterDecision } from '../lib/engines/masterDecision';
+import { recordMasterDecision } from '../lib/intelligenceClient';
+import MasterDecisionPanel from './MasterDecisionPanel';
 import { fetchMLPrediction, fetchCachedMLPrediction } from '../lib/mlClient';
 import { runBacktest, walkForward, monteCarlo, DEFAULT_BACKTEST } from '../lib/backtest';
 import type { BacktestMetrics, MonteCarloResult, WalkForwardResult } from '../lib/types';
@@ -45,6 +48,7 @@ export default function Dashboard() {
   const [ml, setMl] = useState<MLPrediction | null>(null);
   const [mlLoading, setMlLoading] = useState(false);
   const [decision, setDecision] = useState<DecisionResult | null>(null);
+  const [master, setMaster] = useState<MasterDecision | null>(null);
   const [backtestMetrics, setBacktestMetrics] = useState<BacktestMetrics | null>(null);
   const [wfResult, setWfResult] = useState<WalkForwardResult | null>(null);
   const [mcResult, setMcResult] = useState<MonteCarloResult | null>(null);
@@ -143,12 +147,14 @@ export default function Dashboard() {
     return () => { disposed = true; };
   }, [symbol, instrument.live]);
 
-  // Recompute the decision whenever candles or ML change.
+  // Recompute the full v1.1 pipeline whenever candles or ML change.
   useEffect(() => {
-    if (candles.length < 60 || !instrument.live) { setDecision(null); return; }
+    if (candles.length < 60 || !instrument.live) { setDecision(null); setMaster(null); return; }
     const candleMap = { ...mtfCandles, [timeframe]: candles };
-    const result = makeDecision(candles, ml, symbol, timeframe, undefined, candleMap);
-    setDecision(result);
+    const md = runMasterDecision({ candles, symbol, timeframe, ml, candleMap });
+    setMaster(md);
+    setDecision(md.analysis);
+    void recordMasterDecision(md);
   }, [candles, ml, symbol, timeframe, instrument.live, mtfCandles]);
 
   const runBacktestNow = () => {
@@ -310,6 +316,9 @@ export default function Dashboard() {
                   )}
                 </div>
               )}
+
+              {/* Master decision: data quality, risk gate, contradictions */}
+              <MasterDecisionPanel decision={master} />
 
               {/* Recommendation with risk + contributors */}
               {rec && <RecommendationCard rec={rec} />}
