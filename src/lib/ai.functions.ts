@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const predictInput = z.object({
   pair: z.string().min(3).max(20),
@@ -7,6 +8,7 @@ const predictInput = z.object({
 });
 
 export const predictML = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => predictInput.parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -25,6 +27,7 @@ export const predictML = createServerFn({ method: "POST" })
   });
 
 export const retrainML = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => predictInput.parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -42,7 +45,9 @@ export const retrainML = createServerFn({ method: "POST" })
     }
   });
 
-export const getNews = createServerFn({ method: "GET" }).handler(async () => {
+export const getNews = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { refreshNews } = await import("./news.server");
   try {
@@ -66,6 +71,7 @@ Be concise, practical, and educational. Never give guaranteed-profit advice. Alw
 When users ask about specific signals they're seeing, explain what the indicator measures and how to interpret it.`;
 
 export const askCoachFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => coachInput.parse(data))
   .handler(async ({ data }) => {
     const apiKey = process.env["LOVABLE_API_KEY"];
