@@ -48,6 +48,7 @@ export default function Dashboard() {
   const [ml, setMl] = useState<MLPrediction | null>(null);
   const [mlLoading, setMlLoading] = useState(false);
   const [decision, setDecision] = useState<DecisionResult | null>(null);
+  const [master, setMaster] = useState<MasterDecision | null>(null);
   const [backtestMetrics, setBacktestMetrics] = useState<BacktestMetrics | null>(null);
   const [wfResult, setWfResult] = useState<WalkForwardResult | null>(null);
   const [mcResult, setMcResult] = useState<MonteCarloResult | null>(null);
