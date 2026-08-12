@@ -78,12 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: profileError.message ?? 'Account created, but profile save failed' };
     }
 
-    const { error: roleError } = await supabase.from('user_roles').insert({
-      user_id: data.user.id, role: 'trader',
-    });
-    if (roleError && roleError.code !== '23505') {
-      // 23505 = unique violation (role row already exists from a trigger or retry) — safe to ignore
-      return { error: roleError.message ?? 'Account created, but role assignment failed' };
+    // Roles are privileged: only verified server code may write them.
+    try {
+      await claimDefaultRole({ data: undefined });
+    } catch (err) {
+      console.warn('Default role assignment deferred', err);
     }
 
     return { error: null };
