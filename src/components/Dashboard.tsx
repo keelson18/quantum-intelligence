@@ -143,12 +143,14 @@ export default function Dashboard() {
     return () => { disposed = true; };
   }, [symbol, instrument.live]);
 
-  // Recompute the decision whenever candles or ML change.
+  // Recompute the full v1.1 pipeline whenever candles or ML change.
   useEffect(() => {
-    if (candles.length < 60 || !instrument.live) { setDecision(null); return; }
+    if (candles.length < 60 || !instrument.live) { setDecision(null); setMaster(null); return; }
     const candleMap = { ...mtfCandles, [timeframe]: candles };
-    const result = makeDecision(candles, ml, symbol, timeframe, undefined, candleMap);
-    setDecision(result);
+    const md = runMasterDecision({ candles, symbol, timeframe, ml, candleMap });
+    setMaster(md);
+    setDecision(md.analysis);
+    void recordMasterDecision(md);
   }, [candles, ml, symbol, timeframe, instrument.live, mtfCandles]);
 
   const runBacktestNow = () => {
