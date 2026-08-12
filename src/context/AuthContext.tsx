@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { UserRole } from '../lib/types';
+import { claimDefaultRole } from '../lib/roles.functions';
 
 export interface SignUpData {
   email: string;
