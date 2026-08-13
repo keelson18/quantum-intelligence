@@ -64,7 +64,7 @@ export function marketStructureEngine(
       { key: 'swing_count', value: structure.swings.length },
       { key: 'structure_events', value: events.length },
       { key: 'order_blocks', value: smartMoney.orderBlocks.length },
-      { key: 'fair_value_gaps', value: smartMoney.fvgs.length },
+      { key: 'fair_value_gaps', value: smartMoney.fairValueGaps.length },
     ];
     if (invalidationLevel !== null) evidence.push({ key: 'invalidation_level', value: invalidationLevel });
     const last = events[events.length - 1];
