@@ -6,7 +6,8 @@
 // ============================================================================
 
 import type { Candle, Timeframe } from '../types';
-import { runBacktest, type BacktestConfig } from '../backtest';
+import { runBacktest, DEFAULT_BACKTEST, type BacktestConfig } from '../backtest';
+import { evaluateStrategies } from '../strategies';
 import { runEngine, type EngineResult, type Evidence } from './contract';
 import { ENGINE_REGISTRY } from './registry';
 
