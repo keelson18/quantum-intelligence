@@ -54,12 +54,21 @@ export function researchEngine(
 
     const findings: ResearchFinding[] = [];
     for (const strategy of strategies) {
-      const cfg = { symbol, timeframe, strategy, ...config } as unknown as BacktestConfig;
-      const a = runBacktest(inSample, cfg);
-      const b = runBacktest(outSample, cfg);
-      const inRate = a?.metrics?.winRate ?? 0;
-      const outRate = b?.metrics?.winRate ?? 0;
-      const trades = (a?.metrics?.totalTrades ?? 0) + (b?.metrics?.totalTrades ?? 0);
+      const signalFn = (slice: Candle[]) => {
+        try {
+          const { allSignals } = evaluateStrategies(slice, null);
+          const hit = allSignals.find((s) => s.strategy === strategy);
+          return hit ? { side: hit.side, confidence: hit.confidence } : null;
+        } catch {
+          return null;
+        }
+      };
+      const cfg = { ...DEFAULT_BACKTEST, ...config };
+      const a = runBacktest(inSample, signalFn, cfg);
+      const b = runBacktest(outSample, signalFn, cfg);
+      const inRate = a.winRate;
+      const outRate = b.winRate;
+      const trades = a.totalTrades + b.totalTrades;
       const degradation = inRate > 0 ? ((inRate - outRate) / inRate) * 100 : 0;
       findings.push({
         strategy,
