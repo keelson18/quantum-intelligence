@@ -80,10 +80,10 @@ export function patternEngine(
       return { hit, family, contextSupported, note };
     });
 
-    const bullish = patterns.filter((p) => p.direction === 'bullish').length;
-    const bearish = patterns.filter((p) => p.direction === 'bearish').length;
+    const bullish = patterns.filter((p) => p.side === 'buy').length;
+    const bearish = patterns.filter((p) => p.side === 'sell').length;
     const supporting = qualified.filter(
-      (q) => q.contextSupported && ((proposedSide === 'buy' && q.hit.direction === 'bullish') || (proposedSide === 'sell' && q.hit.direction === 'bearish')),
+      (q) => q.contextSupported && proposedSide !== 'neutral' && q.hit.side === proposedSide,
     ).length;
 
     const evidence: Evidence[] = [
