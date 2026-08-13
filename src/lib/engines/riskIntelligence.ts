@@ -87,7 +87,7 @@ export function riskIntelligenceEngine(
       { key: 'atr_pct', value: Number(atrPct.toFixed(3)) },
       { key: 'daily_loss_pct', value: Number(dailyLossPct.toFixed(3)) },
       { key: 'drawdown_pct', value: Number(drawdownPct.toFixed(3)) },
-      { key: 'exposure_pct', value: Number(portfolio.currentExposurePct.toFixed(2)) },
+      { key: 'exposure_pct', value: Number(exposurePct.toFixed(2)) },
       ...gate.violations.map((v) => ({ key: v.code, value: v.actual, note: `${v.detail} (limit ${v.limit})` })),
       ...tripped.map((c) => ({ key: `breaker_${c.code}`, value: true, note: c.detail })),
     ];
