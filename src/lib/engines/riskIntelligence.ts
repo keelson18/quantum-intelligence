@@ -56,10 +56,16 @@ export function riskIntelligenceEngine(
     const dailyLossPct = portfolio.equity > 0 ? (portfolio.dailyLossUsed / portfolio.equity) * 100 : 0;
     const drawdownPct = portfolio.peakEquity > 0 ? ((portfolio.peakEquity - portfolio.equity) / portfolio.peakEquity) * 100 : 0;
 
+    // PortfolioState stores limits/exposure as fractions (0.03 = 3%).
+    const maxDailyLoss = portfolio.maxDailyLossPct * 100;
+    const maxDrawdown = portfolio.maxDrawdownPct * 100;
+    const exposurePct = portfolio.currentExposurePct * 100;
+    const maxExposure = portfolio.maxExposurePct * 100;
+
     const circuitBreakers: CircuitBreaker[] = [
-      { code: 'daily_loss', tripped: dailyLossPct >= portfolio.maxDailyLossPct, detail: `Daily loss ${dailyLossPct.toFixed(2)}% of ${portfolio.maxDailyLossPct}% budget` },
-      { code: 'max_drawdown', tripped: drawdownPct >= portfolio.maxDrawdownPct, detail: `Drawdown ${drawdownPct.toFixed(2)}% vs ${portfolio.maxDrawdownPct}% limit` },
-      { code: 'position_limit', tripped: portfolio.currentExposurePct >= portfolio.maxExposurePct, detail: `Exposure ${portfolio.currentExposurePct.toFixed(1)}% vs ${portfolio.maxExposurePct}% limit` },
+      { code: 'daily_loss', tripped: dailyLossPct >= maxDailyLoss, detail: `Daily loss ${dailyLossPct.toFixed(2)}% of ${maxDailyLoss.toFixed(1)}% budget` },
+      { code: 'max_drawdown', tripped: drawdownPct >= maxDrawdown, detail: `Drawdown ${drawdownPct.toFixed(2)}% vs ${maxDrawdown.toFixed(1)}% limit` },
+      { code: 'position_limit', tripped: exposurePct >= maxExposure, detail: `Exposure ${exposurePct.toFixed(1)}% vs ${maxExposure.toFixed(1)}% limit` },
       { code: 'volatility_spike', tripped: atrPct > 8, detail: `ATR ${atrPct.toFixed(2)}% of price` },
     ];
     const tripped = circuitBreakers.filter((c) => c.tripped);
