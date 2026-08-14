@@ -366,7 +366,7 @@ export function runMasterDecision(input: MasterDecisionInput): MasterDecision {
     action,
     confidence,
     engines: pipeline.map((p) => p.result),
-    selectedStrategy: strategy.result?.selected.strategy ?? analysis.selectedStrategy.label ?? null,
+    selectedStrategy: strategy.result?.selected.label ?? analysis.selectedStrategy.label ?? null,
     rejectedAlternatives: (strategy.result?.candidates ?? []).filter((c) => c.rejected).map((c) => `${c.name}: ${c.rejectionReason ?? 'rejected'}`),
     invalidationConditions: structure.result?.invalidationLevel != null
       ? [`Structural invalidation at ${structure.result.invalidationLevel}`]
@@ -395,7 +395,7 @@ export function runMasterDecision(input: MasterDecisionInput): MasterDecision {
 
   // ---- Engine 19: Research --------------------------------------------
   const research = runResearch
-    ? researchEngine(contextId, candles, symbol, timeframe, [strategy.result?.selected.strategy ?? analysis.selectedStrategy.label])
+    ? researchEngine(contextId, candles, symbol, timeframe, [strategy.result?.selected.label ?? analysis.selectedStrategy.label])
     : null;
   if (research) {
     push(19, research, research.result
