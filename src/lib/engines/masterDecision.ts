@@ -208,7 +208,7 @@ export function runMasterDecision(input: MasterDecisionInput): MasterDecision {
   // ---- Engine 3: Market Structure ---------------------------------------
   const structure = marketStructureEngine(contextId, candles, timeframe);
   push(3, structure, structure.result
-    ? `${structure.result.structure.trend} · ${structure.result.events.length} event(s)`
+    ? `${structure.result.structure.regime} · ${structure.result.events.length} event(s)`
     : 'Structure unavailable');
 
   // ---- Engine 4: Liquidity ----------------------------------------------
@@ -240,7 +240,7 @@ export function runMasterDecision(input: MasterDecisionInput): MasterDecision {
   // ---- Engine 8: Strategy ----------------------------------------------
   const strategy = strategyEngine(contextId, candles, ml, regime.result);
   push(8, strategy, strategy.result
-    ? `${strategy.result.selected.strategy} selected · ${strategy.result.rejectedCount} rejected`
+    ? `${strategy.result.selected.label} selected · ${strategy.result.rejectedCount} rejected`
     : 'No strategy candidate qualified');
 
   // ---- Engine 9: Historical Similarity ---------------------------------
@@ -366,7 +366,7 @@ export function runMasterDecision(input: MasterDecisionInput): MasterDecision {
     action,
     confidence,
     engines: pipeline.map((p) => p.result),
-    selectedStrategy: strategy.result?.selected.strategy ?? analysis.selectedStrategy.strategy ?? null,
+    selectedStrategy: strategy.result?.selected.strategy ?? analysis.selectedStrategy.label ?? null,
     rejectedAlternatives: (strategy.result?.candidates ?? []).filter((c) => c.rejected).map((c) => `${c.name}: ${c.rejectionReason ?? 'rejected'}`),
     invalidationConditions: structure.result?.invalidationLevel != null
       ? [`Structural invalidation at ${structure.result.invalidationLevel}`]
@@ -395,7 +395,7 @@ export function runMasterDecision(input: MasterDecisionInput): MasterDecision {
 
   // ---- Engine 19: Research --------------------------------------------
   const research = runResearch
-    ? researchEngine(contextId, candles, symbol, timeframe, [strategy.result?.selected.strategy ?? analysis.selectedStrategy.strategy])
+    ? researchEngine(contextId, candles, symbol, timeframe, [strategy.result?.selected.strategy ?? analysis.selectedStrategy.label])
     : null;
   if (research) {
     push(19, research, research.result
