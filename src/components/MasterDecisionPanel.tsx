@@ -1,5 +1,21 @@
 import { ShieldCheck, ShieldAlert, AlertTriangle, Activity, Ban, Eye, TrendingUp, TrendingDown, Pause } from 'lucide-react';
 import type { MasterDecision, DecisionAction } from '../lib/engines/masterDecision';
+import type { EngineStatus } from '../lib/engines/contract';
+import { LAYER_LABEL } from '../lib/engines/registry';
+
+const STATUS_DOT: Record<EngineStatus, string> = {
+  ok: 'bg-success',
+  degraded: 'bg-warning',
+  insufficient_data: 'bg-muted',
+  failed: 'bg-danger',
+};
+
+const STATUS_TEXT: Record<EngineStatus, string> = {
+  ok: 'text-success',
+  degraded: 'text-warning',
+  insufficient_data: 'text-muted',
+  failed: 'text-danger',
+};
 
 const ACTION_STYLE: Record<DecisionAction, { cls: string; label: string; Icon: typeof TrendingUp }> = {
   BUY: { cls: 'text-success border-success/40 bg-success/10', label: 'BUY', Icon: TrendingUp },
