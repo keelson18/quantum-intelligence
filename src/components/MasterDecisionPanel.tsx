@@ -1,5 +1,21 @@
 import { ShieldCheck, ShieldAlert, AlertTriangle, Activity, Ban, Eye, TrendingUp, TrendingDown, Pause } from 'lucide-react';
 import type { MasterDecision, DecisionAction } from '../lib/engines/masterDecision';
+import type { EngineStatus } from '../lib/engines/contract';
+import { LAYER_LABEL } from '../lib/engines/registry';
+
+const STATUS_DOT: Record<EngineStatus, string> = {
+  ok: 'bg-success',
+  degraded: 'bg-warning',
+  insufficient_data: 'bg-muted',
+  failed: 'bg-danger',
+};
+
+const STATUS_TEXT: Record<EngineStatus, string> = {
+  ok: 'text-success',
+  degraded: 'text-warning',
+  insufficient_data: 'text-muted',
+  failed: 'text-danger',
+};
 
 const ACTION_STYLE: Record<DecisionAction, { cls: string; label: string; Icon: typeof TrendingUp }> = {
   BUY: { cls: 'text-success border-success/40 bg-success/10', label: 'BUY', Icon: TrendingUp },
@@ -95,6 +111,41 @@ export default function MasterDecisionPanel({ decision }: { decision: MasterDeci
         )}
       </div>
 
+      {/* Full 19-engine pipeline breakdown, spec execution order */}
+      <div className="rounded-lg border border-border p-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium">Engine Pipeline — 19 engines</span>
+          <span className="text-[10px] text-muted font-mono">{decision.pipeline.length} steps</span>
+        </div>
+        <div className="space-y-1">
+          {decision.pipeline.map((run, idx) => (
+            <div
+              key={`${run.descriptor.id}-${idx}`}
+              className={`flex items-start gap-2 rounded-md border border-border/60 px-2 py-1.5 ${run.skipped ? 'opacity-60' : ''}`}
+            >
+              <span className="text-[10px] font-mono text-muted w-6 shrink-0 mt-0.5 text-right">{run.descriptor.order}</span>
+              <span className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[run.result.status]}`} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] font-medium truncate">{run.descriptor.label}</span>
+                  <span className="text-[9px] font-mono px-1 py-px rounded bg-bg border border-border text-muted">
+                    {LAYER_LABEL[run.descriptor.layer]}
+                  </span>
+                  <span className="text-[9px] font-mono text-muted">v{run.result.engine_version}</span>
+                </div>
+                <p className="text-[10px] text-muted mt-0.5 break-words">{run.verdict}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className={`text-[11px] font-semibold ${STATUS_TEXT[run.result.status]}`}>
+                  {(run.result.confidence * 100).toFixed(0)}%
+                </p>
+                <p className="text-[9px] text-muted font-mono">{run.result.latency_ms}ms</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="flex flex-wrap gap-1.5">
         {Object.entries(decision.engineVersions).map(([name, version]) => (
           <span key={name} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-bg border border-border text-muted">
@@ -115,3 +166,4 @@ function Metric({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
