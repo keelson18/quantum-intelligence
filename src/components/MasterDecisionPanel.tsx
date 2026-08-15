@@ -25,6 +25,19 @@ const ACTION_STYLE: Record<DecisionAction, { cls: string; label: string; Icon: t
   NO_TRADE: { cls: 'text-danger border-danger/40 bg-danger/10', label: 'NO TRADE', Icon: Ban },
 };
 
+type PipelineRun = MasterDecision['pipeline'][number];
+
+/** Groups consecutive pipeline steps by architecture layer, preserving spec order. */
+function groupByLayer(pipeline: PipelineRun[]): { layer: EngineLayer; runs: PipelineRun[] }[] {
+  const groups: { layer: EngineLayer; runs: PipelineRun[] }[] = [];
+  for (const run of pipeline) {
+    const last = groups[groups.length - 1];
+    if (last && last.layer === run.descriptor.layer) last.runs.push(run);
+    else groups.push({ layer: run.descriptor.layer, runs: [run] });
+  }
+  return groups;
+}
+
 export default function MasterDecisionPanel({ decision }: { decision: MasterDecision | null }) {
   if (!decision) {
     return (
