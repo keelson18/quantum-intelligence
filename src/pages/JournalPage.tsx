@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BookOpen, Search, Plus, X, TrendingUp, TrendingDown, Lightbulb, Tag } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { listJournalEntries, createJournalEntry, updateJournalEntry, deleteJournalEntry } from '../lib/data/journal.repo';
 import { fetchTradeHistory, type PaperTrade } from '../lib/paperTrading';
 import { computePortfolioMetrics } from '../lib/portfolioEngine';
 
@@ -37,11 +37,11 @@ export default function JournalPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [{ data: je }, tr] = await Promise.all([
-      supabase.from('journal_entries').select('*').order('created_at', { ascending: false }),
+    const [je, tr] = await Promise.all([
+      listJournalEntries<JournalEntry>(),
       fetchTradeHistory(50),
     ]);
-    setEntries((je ?? []) as JournalEntry[]);
+    setEntries(je);
     setTrades(tr);
     setLoading(false);
   }, []);
@@ -78,15 +78,15 @@ export default function JournalPage() {
       tags: tagArray, mood, trade_id: tradeId || null,
     };
     if (editing) {
-      await supabase.from('journal_entries').update(row).eq('id', editing.id);
+      await updateJournalEntry(editing.id, row);
     } else {
-      await supabase.from('journal_entries').insert(row);
+      await createJournalEntry(row);
     }
     setShowForm(false); resetForm(); loadData();
   };
 
   const remove = async (id: string) => {
-    await supabase.from('journal_entries').delete().eq('id', id);
+    await deleteJournalEntry(id);
     loadData();
   };
 

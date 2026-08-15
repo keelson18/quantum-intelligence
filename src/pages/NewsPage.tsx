@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Newspaper, Search, TrendingUp, TrendingDown, Minus, ExternalLink, Clock, RefreshCw } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { listCachedNews } from '../lib/data/news.repo';
 import { getNews } from '../lib/ai.functions';
 
 interface NewsItem {
@@ -25,13 +25,9 @@ export default function NewsPage() {
     setLoading(true);
 
     // Try cached news from Supabase first (fast path)
-    const { data: cached } = await supabase
-      .from('news_items')
-      .select('*')
-      .order('published_at', { ascending: false })
-      .limit(20);
+    const cached = await listCachedNews(20);
 
-    if (cached && cached.length > 0) {
+    if (cached.length > 0) {
       setNews(cached as NewsItem[]);
       setLoading(false);
       // Refresh in background via edge function
