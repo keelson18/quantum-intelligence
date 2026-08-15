@@ -1,6 +1,6 @@
 // Data-access tier: cached backtest runs.
 import { supabase } from '../supabase';
-import type { BacktestMetrics } from '../backtest';
+import type { BacktestMetrics } from '../types';
 
 export interface SavedBacktestRun {
   id: string;
