@@ -20,7 +20,7 @@ import { makeContextId, type EngineResult } from './contract';
 import { ENGINE_REGISTRY, CONTRADICTION_DESCRIPTOR, type EngineDescriptor } from './registry';
 import { dataQualityEngine, type DataQualityReport } from './dataQuality';
 import { contradictionEngine, type ContradictionReport } from './contradictions';
-import { riskGateEngine, DEFAULT_RISK_LIMITS, type RiskGateResult, type RiskLimits } from './riskGate';
+import { riskGateEngine, DEFAULT_RISK_LIMITS, RISK_GATE_VERSION, type RiskGateResult, type RiskLimits } from './riskGate';
 import { marketContextEngine, type MarketContextResult } from './marketContext';
 import { marketStructureEngine, type MarketStructureResult } from './marketStructure';
 import { liquidityEngine, type LiquidityResult } from './liquidity';
