@@ -1,8 +1,9 @@
 import type { Candle, Timeframe } from './types';
 import { TIMEFRAMES } from './types';
+import { APP_CONFIG } from '../config/env';
 
-const REST = 'https://api.binance.com';
-const WS = 'wss://stream.binance.com:9443/ws';
+const REST = APP_CONFIG.marketData.restUrl;
+const WS = APP_CONFIG.marketData.wsUrl;
 
 // Fetch historical klines from Binance REST for a symbol+timeframe.
 // Binance returns newest-first; we reverse to oldest-first for charting/indicators.
