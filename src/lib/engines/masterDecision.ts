@@ -326,6 +326,20 @@ export function runMasterDecision(input: MasterDecisionInput): MasterDecision {
     if (c.severity !== 'high') reasons.push(c.detail);
   }
 
+  // Spec §17 process order: contradictions (4) and risk constraints (8) are
+  // evaluated BEFORE the decision (11), so they are presented in that order.
+  pipeline.push({
+    descriptor: CONTRADICTION_DESCRIPTOR,
+    result: contradictions,
+    verdict: `${cReport.contradictions.length} contradiction(s) · penalty ${(cReport.totalPenalty * 100).toFixed(0)}%${cReport.blocking ? ' · BLOCKING' : ''}`,
+    skipped: false,
+  });
+  pipeline.push({
+    descriptor: { id: 'risk_gate', order: 15, label: 'Risk Gate (authoritative)', layer: 'risk', version: riskGate.engine_version, responsibility: 'Final veto over execution and position size; cannot be bypassed.' },
+    result: riskGate,
+    verdict: gate ? `${gate.approved ? 'Approved' : 'Not approved'} · ${gate.reason}` : 'Risk gate did not run',
+    skipped: false,
+  });
   pipeline.push({
     descriptor: descriptorOf(15),
     result: {
@@ -346,18 +360,6 @@ export function runMasterDecision(input: MasterDecisionInput): MasterDecision {
       input_context_id: contextId,
     },
     verdict: `${action} · ${(confidence * 100).toFixed(0)}% · size ${(gate?.allowedMultiplier ?? 0).toFixed(2)}×`,
-    skipped: false,
-  });
-  pipeline.push({
-    descriptor: CONTRADICTION_DESCRIPTOR,
-    result: contradictions,
-    verdict: `${cReport.contradictions.length} contradiction(s) · penalty ${(cReport.totalPenalty * 100).toFixed(0)}%${cReport.blocking ? ' · BLOCKING' : ''}`,
-    skipped: false,
-  });
-  pipeline.push({
-    descriptor: { id: 'risk_gate', order: 15, label: 'Risk Gate (authoritative)', layer: 'risk', version: riskGate.engine_version, responsibility: 'Final veto over execution and position size; cannot be bypassed.' },
-    result: riskGate,
-    verdict: gate ? `${gate.approved ? 'Approved' : 'Not approved'} · ${gate.reason}` : 'Risk gate did not run',
     skipped: false,
   });
 
