@@ -52,6 +52,7 @@ export default function MasterDecisionPanel({ decision }: { decision: MasterDeci
   const quality = decision.engines.dataQuality.result;
   const gate = decision.engines.riskGate?.result ?? null;
   const contradictions = decision.engines.contradictions?.result?.contradictions ?? [];
+  const totalLatency = decision.pipeline.reduce((sum, run) => sum + run.result.latency_ms, 0);
 
   return (
     <div className="rounded-xl border border-border bg-surface p-4 space-y-4">
