@@ -66,7 +66,7 @@ export async function refreshNews(admin: AdminClient) {
         headline: `Bitcoin ${dir} ${(Math.abs(btcChange)).toFixed(2)}% as market ${btcChange >= 0 ? 'sentiment improves' : 'turns cautious'}`,
         summary: `BTC is trading at $${btcPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}, ${btcChange >= 0 ? 'up' : 'down'} ${Math.abs(btcChange).toFixed(2)}% over the last 24 hours. ${btcChange >= 0 ? 'Institutional inflows and positive macro indicators are supporting the upside.' : 'Traders are reducing exposure amid regulatory uncertainty and macro headwinds.'}`,
         source: 'Market Wire',
-        url: `https://www.binance.com/en/price/bitcoin/${now}`,
+        url: `${serverConfig().newsSourceBaseUrl}/en/price/bitcoin/${now}`,
         symbols: ['BTC'],
         published_at: new Date(now - 5 * 60 * 1000).toISOString(),
       });
