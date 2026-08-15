@@ -69,21 +69,7 @@ export default function BacktestingPage() {
     setCached(true);
     setTimeout(() => setCached(false), 2000);
     // Refresh saved runs
-    const { data } = await supabase
-      .from('backtest_results')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(5);
-    if (data) {
-      setSavedRuns(data.map((r: Record<string, unknown>) => ({
-        id: r.id as string,
-        symbol: r.symbol as string,
-        timeframe: r.timeframe as string,
-        created_at: r.created_at as string,
-        metrics: r.metrics as BacktestMetrics,
-      })));
-    }
+    setSavedRuns(await listBacktestRuns(user.id, 5));
   };
 
   const loadCachedRun = (run: typeof savedRuns[0]) => {
