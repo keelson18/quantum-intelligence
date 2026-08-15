@@ -1,7 +1,7 @@
 import { ShieldCheck, ShieldAlert, AlertTriangle, Activity, Ban, Eye, TrendingUp, TrendingDown, Pause } from 'lucide-react';
 import type { MasterDecision, DecisionAction } from '../lib/engines/masterDecision';
 import type { EngineStatus } from '../lib/engines/contract';
-import { LAYER_LABEL } from '../lib/engines/registry';
+import { LAYER_LABEL, type EngineLayer } from '../lib/engines/registry';
 
 const STATUS_DOT: Record<EngineStatus, string> = {
   ok: 'bg-success',
