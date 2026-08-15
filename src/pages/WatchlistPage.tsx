@@ -125,6 +125,7 @@ export default function WatchlistPage() {
   };
 
   const moveItem = async (id: string, dir: -1 | 1) => {
+    if (!activeListId) return;
     const sorted = [...items].sort((a, b) => a.display_order - b.display_order);
     const idx = sorted.findIndex((i) => i.id === id);
     const swapIdx = idx + dir;

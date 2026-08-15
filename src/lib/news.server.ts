@@ -1,5 +1,6 @@
 // Ported news feed generator. Server-side only.
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { serverConfig } from '../config/env.server';
 
 type AdminClient = SupabaseClient<any, any, any>;
 
@@ -47,7 +48,7 @@ export async function refreshNews(admin: AdminClient) {
     // Fetch recent BTC price to ground the headlines in reality
     let btcPrice = 0, btcChange = 0;
     try {
-      const tickerRes = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
+      const tickerRes = await fetch(`${serverConfig().marketRestUrl}/api/v3/ticker/24hr?symbol=BTCUSDT`);
       if (tickerRes.ok) {
         const ticker = await tickerRes.json();
         btcPrice = parseFloat(ticker.lastPrice);

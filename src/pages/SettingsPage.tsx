@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useSettingsStore, type RiskTolerance } from '../store/settingsStore';
 import { getUserSettings, saveUserSettings } from '../lib/data/settings.repo';
-import type { UserRole } from '../lib/types';
+import type { UserRole, Timeframe } from '../lib/types';
 
 const ROLE_LABELS: Record<UserRole, string> = {
   user: 'User', trader: 'Trader', analyst: 'Analyst', admin: 'Admin', super_admin: 'Super Admin',
@@ -24,8 +24,8 @@ export default function SettingsPage() {
       const data = await getUserSettings(user.id);
       if (data) {
         store.bulkSet({
-          defaultTimeframe: data.default_timeframe,
-          riskTolerance: data.risk_tolerance,
+          defaultTimeframe: data.default_timeframe as Timeframe,
+          riskTolerance: data.risk_tolerance as RiskTolerance,
           notifPriceAlerts: data.notif_price_alerts,
           notifAISignals: data.notif_ai_signals,
           notifRiskWarnings: data.notif_risk_warnings,
