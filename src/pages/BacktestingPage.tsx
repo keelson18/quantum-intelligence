@@ -4,7 +4,7 @@ import { BarChart3, Save, Check, Database } from 'lucide-react';
 import { fetchKlines } from '../lib/binance';
 import { runBacktest, walkForward, monteCarlo, DEFAULT_BACKTEST } from '../lib/backtest';
 import { makeDecision } from '../lib/decision';
-import { supabase } from '../lib/supabase';
+import { listBacktestRuns, saveBacktestRun } from '../lib/data/backtests.repo';
 import { CRYPTO_INSTRUMENTS, type Candle, type Timeframe, type BacktestMetrics, type MonteCarloResult, type WalkForwardResult } from '../lib/types';
 import { useAuth } from '../context/AuthContext';
 
@@ -36,21 +36,7 @@ export default function BacktestingPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await supabase
-        .from('backtest_results')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-      if (data) {
-        setSavedRuns(data.map((r: Record<string, unknown>) => ({
-          id: r.id as string,
-          symbol: r.symbol as string,
-          timeframe: r.timeframe as string,
-          created_at: r.created_at as string,
-          metrics: r.metrics as BacktestMetrics,
-        })));
-      }
+      setSavedRuns(await listBacktestRuns(user.id, 5));
     })();
   }, [user]);
 
@@ -75,35 +61,15 @@ export default function BacktestingPage() {
   const cacheRun = async () => {
     if (!user || !metrics) return;
     setCaching(true);
-    await supabase.from('backtest_results').upsert({
-      user_id: user.id,
-      symbol,
-      timeframe,
-      strategy: 'ai_ensemble',
-      metrics: metrics as unknown as Record<string, unknown>,
-      walk_forward: wf as unknown as Record<string, unknown>,
-      monte_carlo: mc as unknown as Record<string, unknown>,
-      last_run: new Date().toISOString(),
+    await saveBacktestRun(user.id, {
+      symbol, timeframe, strategy: 'ai_ensemble',
+      metrics, walkForward: wf, monteCarlo: mc,
     });
     setCaching(false);
     setCached(true);
     setTimeout(() => setCached(false), 2000);
     // Refresh saved runs
-    const { data } = await supabase
-      .from('backtest_results')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(5);
-    if (data) {
-      setSavedRuns(data.map((r: Record<string, unknown>) => ({
-        id: r.id as string,
-        symbol: r.symbol as string,
-        timeframe: r.timeframe as string,
-        created_at: r.created_at as string,
-        metrics: r.metrics as BacktestMetrics,
-      })));
-    }
+    setSavedRuns(await listBacktestRuns(user.id, 5));
   };
 
   const loadCachedRun = (run: typeof savedRuns[0]) => {

@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Star, Plus, X, Search, GripVertical, Trash2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import {
+  listWatchlists, createWatchlists, createWatchlist, deleteWatchlist,
+  listWatchlistItems, addWatchlistItems, deleteWatchlistItem, swapWatchlistItemOrder,
+} from '../lib/data/watchlists.repo';
 import { subscribeLivePrice } from '../lib/binance';
 import { CRYPTO_INSTRUMENTS, ALL_INSTRUMENTS } from '../lib/types';
 
@@ -34,8 +37,7 @@ export default function WatchlistPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const { data: wl } = await supabase.from('watchlists').select('*').order('created_at', { ascending: true });
-    const lists = (wl ?? []) as Watchlist[];
+    const lists = (await listWatchlists()) as Watchlist[];
     setWatchlists(lists);
     if (lists.length > 0 && !activeListId) setActiveListId(lists[0].id);
     if (lists.length === 0) {
@@ -44,8 +46,8 @@ export default function WatchlistPage() {
         { name: 'Crypto', category: 'crypto', is_default: true },
         { name: 'Favorites', category: 'favorites', is_default: true },
       ];
-      const { data: created } = await supabase.from('watchlists').insert(defaults).select();
-      if (created) {
+      const created = (await createWatchlists(defaults)) as Watchlist[];
+      if (created.length > 0) {
         setWatchlists(created as Watchlist[]);
         setActiveListId((created as Watchlist[])[0].id);
         // Add top crypto to the Crypto list
@@ -55,7 +57,7 @@ export default function WatchlistPage() {
             watchlist_id: cryptoList.id, symbol: inst.symbol, label: inst.label,
             market: 'crypto', display_order: idx,
           }));
-          await supabase.from('watchlist_items').insert(cryptoItems);
+          await addWatchlistItems(cryptoItems);
         }
       }
     }
@@ -68,8 +70,7 @@ export default function WatchlistPage() {
   useEffect(() => {
     if (!activeListId) return;
     (async () => {
-      const { data } = await supabase.from('watchlist_items').select('*').eq('watchlist_id', activeListId).order('display_order');
-      setItems((data ?? []) as WatchlistItem[]);
+      setItems((await listWatchlistItems(activeListId)) as WatchlistItem[]);
     })();
   }, [activeListId]);
 
@@ -97,20 +98,19 @@ export default function WatchlistPage() {
   const addItem = async (symbol: string, label: string, market: string) => {
     if (!activeListId) return;
     const order = items.length;
-    await supabase.from('watchlist_items').insert({ watchlist_id: activeListId, symbol, label, market, display_order: order });
+    await addWatchlistItems([{ watchlist_id: activeListId, symbol, label, market, display_order: order }]);
     setShowAdd(false); setSearch('');
-    const { data } = await supabase.from('watchlist_items').select('*').eq('watchlist_id', activeListId).order('display_order');
-    setItems((data ?? []) as WatchlistItem[]);
+    setItems((await listWatchlistItems(activeListId)) as WatchlistItem[]);
   };
 
   const removeItem = async (id: string) => {
-    await supabase.from('watchlist_items').delete().eq('id', id);
+    await deleteWatchlistItem(id);
     setItems((prev) => prev.filter((i) => i.id !== id));
   };
 
   const createList = async () => {
     if (!newListName.trim()) return;
-    const { data } = await supabase.from('watchlists').insert({ name: newListName.trim(), category: 'custom' }).select().single();
+    const data = await createWatchlist(newListName.trim());
     if (data) {
       setWatchlists((prev) => [...prev, data as Watchlist]);
       setActiveListId(data.id);
@@ -119,23 +119,20 @@ export default function WatchlistPage() {
   };
 
   const deleteList = async (id: string) => {
-    await supabase.from('watchlists').delete().eq('id', id);
+    await deleteWatchlist(id);
     setWatchlists((prev) => prev.filter((l) => l.id !== id));
     if (activeListId === id) setActiveListId(watchlists[0]?.id ?? null);
   };
 
   const moveItem = async (id: string, dir: -1 | 1) => {
+    if (!activeListId) return;
     const sorted = [...items].sort((a, b) => a.display_order - b.display_order);
     const idx = sorted.findIndex((i) => i.id === id);
     const swapIdx = idx + dir;
     if (swapIdx < 0 || swapIdx >= sorted.length) return;
     const a = sorted[idx], b = sorted[swapIdx];
-    await Promise.all([
-      supabase.from('watchlist_items').update({ display_order: b.display_order }).eq('id', a.id),
-      supabase.from('watchlist_items').update({ display_order: a.display_order }).eq('id', b.id),
-    ]);
-    const { data } = await supabase.from('watchlist_items').select('*').eq('watchlist_id', activeListId).order('display_order');
-    setItems((data ?? []) as WatchlistItem[]);
+    await swapWatchlistItemOrder(a, b);
+    setItems((await listWatchlistItems(activeListId)) as WatchlistItem[]);
   };
 
   if (loading) return <div className="px-4 lg:px-6 py-12 text-center text-muted text-sm">Loading watchlists…</div>;

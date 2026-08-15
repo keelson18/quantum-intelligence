@@ -134,8 +134,8 @@ export default function MasterDecisionPanel({ decision }: { decision: MasterDeci
           </span>
         </div>
         <ol className="space-y-2">
-          {groupByLayer(decision.pipeline).map((group) => (
-            <li key={group.layer}>
+          {groupByLayer(decision.pipeline).map((group, gIdx) => (
+            <li key={`${group.layer}-${gIdx}`}>
               <p className="text-[9px] uppercase tracking-[0.12em] text-muted mb-1">{LAYER_LABEL[group.layer]}</p>
               <div className="space-y-1">
                 {group.runs.map((run, idx) => (

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Bell, BellRing, X, Check, Trash2, Plus, Zap } from 'lucide-react';
 import { useAlertStore } from '../store/alertStore';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
+import { listAlertRules, createAlertRule, setAlertRuleEnabled, deleteAlertRule } from '../lib/data/alerts.repo';
 
 const SEVERITY_COLORS: Record<string, string> = {
   info: 'text-primary bg-primary/10',
@@ -93,8 +93,7 @@ export function AlertManager() {
 
   const loadRules = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase.from('alert_rules').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
-    setRules((data ?? []) as AlertRuleRow[]);
+    setRules((await listAlertRules(user.id)) as AlertRuleRow[]);
   }, [user]);
 
   useEffect(() => { loadRules(); }, [loadRules]);
@@ -117,8 +116,8 @@ export function AlertManager() {
       risk_exposure: 'Portfolio exposure exceeded',
       risk_drawdown: 'Drawdown warning',
     };
-    await supabase.from('alert_rules').insert({
-      user_id: user.id, type, symbol,
+    await createAlertRule(user.id, {
+      type, symbol,
       threshold: threshold ? parseFloat(threshold) : null,
       severity, message: messages[type] ?? `${symbol} ${type}`,
     });
@@ -126,12 +125,12 @@ export function AlertManager() {
   };
 
   const toggleRule = async (id: string, enabled: boolean) => {
-    await supabase.from('alert_rules').update({ enabled: !enabled }).eq('id', id);
+    await setAlertRuleEnabled(id, !enabled);
     loadRules();
   };
 
   const deleteRule = async (id: string) => {
-    await supabase.from('alert_rules').delete().eq('id', id);
+    await deleteAlertRule(id);
     loadRules();
   };
 

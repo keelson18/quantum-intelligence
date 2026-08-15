@@ -3,8 +3,8 @@ import { Settings, Sun, Moon, Bell, Shield, User, Sliders, Save, Check } from 'l
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useSettingsStore, type RiskTolerance } from '../store/settingsStore';
-import { supabase } from '../lib/supabase';
-import type { UserRole } from '../lib/types';
+import { getUserSettings, saveUserSettings } from '../lib/data/settings.repo';
+import type { UserRole, Timeframe } from '../lib/types';
 
 const ROLE_LABELS: Record<UserRole, string> = {
   user: 'User', trader: 'Trader', analyst: 'Analyst', admin: 'Admin', super_admin: 'Super Admin',
@@ -20,11 +20,12 @@ export default function SettingsPage() {
   // Load settings from DB on mount
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from('user_settings').select('*').eq('user_id', user?.id).maybeSingle();
+      if (!user?.id) return;
+      const data = await getUserSettings(user.id);
       if (data) {
         store.bulkSet({
-          defaultTimeframe: data.default_timeframe,
-          riskTolerance: data.risk_tolerance,
+          defaultTimeframe: data.default_timeframe as Timeframe,
+          riskTolerance: data.risk_tolerance as RiskTolerance,
           notifPriceAlerts: data.notif_price_alerts,
           notifAISignals: data.notif_ai_signals,
           notifRiskWarnings: data.notif_risk_warnings,
@@ -37,16 +38,14 @@ export default function SettingsPage() {
   const saveSettings = useCallback(async () => {
     if (!user) return;
     setSaving(true);
-    await supabase.from('user_settings').upsert({
-      user_id: user.id,
-      default_timeframe: store.defaultTimeframe,
-      risk_tolerance: store.riskTolerance,
+    await saveUserSettings(user.id, {
+      defaultTimeframe: store.defaultTimeframe,
+      riskTolerance: store.riskTolerance,
       theme,
-      notif_price_alerts: store.notifPriceAlerts,
-      notif_ai_signals: store.notifAISignals,
-      notif_risk_warnings: store.notifRiskWarnings,
-      notif_strategy_triggers: store.notifStrategyTriggers,
-      updated_at: new Date().toISOString(),
+      notifPriceAlerts: store.notifPriceAlerts,
+      notifAISignals: store.notifAISignals,
+      notifRiskWarnings: store.notifRiskWarnings,
+      notifStrategyTriggers: store.notifStrategyTriggers,
     });
     setSaving(false);
     setSaved(true);

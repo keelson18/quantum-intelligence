@@ -1,12 +1,13 @@
 // Ported ML prediction service: pure TypeScript feature engineering plus a
 // logistic-regression ensemble. Server-side only.
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { serverConfig } from "../config/env.server";
 
 type AdminClient = SupabaseClient<any, any, any>;
 
 // ---- Config ----
 
-const BINANCE = "https://api.binance.com";
+const BINANCE = serverConfig().marketRestUrl;
 const PRED_HORIZON = 5;
 const TRAIN_FRACTION = 0.7;
 

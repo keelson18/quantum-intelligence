@@ -4,7 +4,7 @@ import { fetchKlines } from '../lib/binance';
 import { makeDecision } from '../lib/decision';
 import { assessRisk, DEFAULT_PORTFOLIO } from '../lib/risk';
 import { CRYPTO_INSTRUMENTS, type Timeframe, type Side } from '../lib/types';
-import { supabase } from '../lib/supabase';
+import { listAiModels, listAiPredictions } from '../lib/data/models.repo';
 
 type Tab = 'signals' | 'models' | 'predictions';
 
@@ -97,14 +97,12 @@ export default function AICenterPage() {
 
   const loadModels = useCallback(async () => {
     setModelsLoading(true);
-    const { data } = await supabase.from('ai_models').select('*').order('created_at', { ascending: false }).limit(20);
-    setModels((data ?? []) as ModelRow[]);
+    setModels(await listAiModels<ModelRow>(20));
     setModelsLoading(false);
   }, []);
 
   const loadPredictions = useCallback(async () => {
-    const { data } = await supabase.from('ai_predictions').select('*').order('created_at', { ascending: false }).limit(50);
-    setPredictions((data ?? []) as PredictionRow[]);
+    setPredictions(await listAiPredictions<PredictionRow>(50));
   }, []);
 
   useEffect(() => { runScan(); }, [runScan]);

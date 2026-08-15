@@ -20,7 +20,7 @@ import { makeContextId, type EngineResult } from './contract';
 import { ENGINE_REGISTRY, CONTRADICTION_DESCRIPTOR, type EngineDescriptor } from './registry';
 import { dataQualityEngine, type DataQualityReport } from './dataQuality';
 import { contradictionEngine, type ContradictionReport } from './contradictions';
-import { riskGateEngine, DEFAULT_RISK_LIMITS, type RiskGateResult, type RiskLimits } from './riskGate';
+import { riskGateEngine, DEFAULT_RISK_LIMITS, RISK_GATE_VERSION, type RiskGateResult, type RiskLimits } from './riskGate';
 import { marketContextEngine, type MarketContextResult } from './marketContext';
 import { marketStructureEngine, type MarketStructureResult } from './marketStructure';
 import { liquidityEngine, type LiquidityResult } from './liquidity';
@@ -156,8 +156,15 @@ export function runMasterDecision(input: MasterDecisionInput): MasterDecision {
     : 'No market data available');
 
   const halted = (reason: string, reasons: string[]): MasterDecision => {
-    for (const d of ENGINE_REGISTRY.slice(1)) pipeline.push(pending(d, reason));
+    // Keep the halted pipeline in the same spec order as a live run:
+    // engines 2..14, contradiction search + risk gate, then 15..19.
+    for (const d of ENGINE_REGISTRY.slice(1, 14)) pipeline.push(pending(d, reason));
     pipeline.push(pending(CONTRADICTION_DESCRIPTOR, reason));
+    pipeline.push(pending(
+      { id: 'risk_gate', order: 15, label: 'Risk Gate (authoritative)', layer: 'risk', version: RISK_GATE_VERSION, responsibility: 'Final veto over execution and position size; cannot be bypassed.' },
+      reason,
+    ));
+    for (const d of ENGINE_REGISTRY.slice(14)) pipeline.push(pending(d, reason));
     return {
       contextId, symbol, timeframe,
       action: 'NO_TRADE',

@@ -3,7 +3,7 @@ import { ShieldAlert, RefreshCw, AlertTriangle, TrendingUp, TrendingDown } from 
 import { fetchKlines } from '../lib/binance';
 import { assessRisk, DEFAULT_PORTFOLIO, type PortfolioState } from '../lib/risk';
 import { CRYPTO_INSTRUMENTS, type Timeframe } from '../lib/types';
-import { supabase } from '../lib/supabase';
+import { getRiskState, saveRiskState } from '../lib/data/risk.repo';
 import { useAuth } from '../context/AuthContext';
 
 interface RiskRow {
@@ -32,7 +32,7 @@ export default function RiskPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await supabase.from('risk_state').select('*').eq('user_id', user.id).maybeSingle();
+      const data = await getRiskState(user.id);
       if (data) {
         setPortfolio({
           equity: data.equity,
@@ -53,15 +53,13 @@ export default function RiskPage() {
   useEffect(() => {
     if (!user) return;
     const timer = setTimeout(() => {
-      supabase.from('risk_state').upsert({
-        user_id: user.id,
+      void saveRiskState(user.id, {
         equity: portfolio.equity,
-        starting_equity: portfolio.startingEquity,
-        max_daily_loss_pct: portfolio.maxDailyLossPct,
-        max_drawdown_pct: portfolio.maxDrawdownPct,
-        max_exposure_pct: portfolio.maxExposurePct,
-        peak_equity: portfolio.peakEquity,
-        updated_at: new Date().toISOString(),
+        startingEquity: portfolio.startingEquity,
+        maxDailyLossPct: portfolio.maxDailyLossPct,
+        maxDrawdownPct: portfolio.maxDrawdownPct,
+        maxExposurePct: portfolio.maxExposurePct,
+        peakEquity: portfolio.peakEquity,
       });
     }, 800);
     return () => clearTimeout(timer);

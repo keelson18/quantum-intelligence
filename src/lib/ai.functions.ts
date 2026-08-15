@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { serverConfig } from "../config/env.server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -78,14 +79,15 @@ export const askCoachFn = createServerFn({ method: "POST" })
     if (!apiKey) return { error: "AI coach is not configured." };
 
     try {
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const { aiGatewayUrl, aiCoachModel } = serverConfig();
+      const res = await fetch(aiGatewayUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "google/gemini-3.5-flash",
+          model: aiCoachModel,
           messages: [{ role: "system", content: SYSTEM_PROMPT }, ...data.messages],
         }),
       });

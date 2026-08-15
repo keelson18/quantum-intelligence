@@ -1,5 +1,6 @@
 // Ported news feed generator. Server-side only.
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { serverConfig } from '../config/env.server';
 
 type AdminClient = SupabaseClient<any, any, any>;
 
@@ -47,7 +48,7 @@ export async function refreshNews(admin: AdminClient) {
     // Fetch recent BTC price to ground the headlines in reality
     let btcPrice = 0, btcChange = 0;
     try {
-      const tickerRes = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
+      const tickerRes = await fetch(`${serverConfig().marketRestUrl}/api/v3/ticker/24hr?symbol=BTCUSDT`);
       if (tickerRes.ok) {
         const ticker = await tickerRes.json();
         btcPrice = parseFloat(ticker.lastPrice);
@@ -65,7 +66,7 @@ export async function refreshNews(admin: AdminClient) {
         headline: `Bitcoin ${dir} ${(Math.abs(btcChange)).toFixed(2)}% as market ${btcChange >= 0 ? 'sentiment improves' : 'turns cautious'}`,
         summary: `BTC is trading at $${btcPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}, ${btcChange >= 0 ? 'up' : 'down'} ${Math.abs(btcChange).toFixed(2)}% over the last 24 hours. ${btcChange >= 0 ? 'Institutional inflows and positive macro indicators are supporting the upside.' : 'Traders are reducing exposure amid regulatory uncertainty and macro headwinds.'}`,
         source: 'Market Wire',
-        url: `https://www.binance.com/en/price/bitcoin/${now}`,
+        url: `${serverConfig().newsSourceBaseUrl}/en/price/bitcoin/${now}`,
         symbols: ['BTC'],
         published_at: new Date(now - 5 * 60 * 1000).toISOString(),
       });
