@@ -113,37 +113,48 @@ export default function MasterDecisionPanel({ decision }: { decision: MasterDeci
 
       {/* Full 19-engine pipeline breakdown, spec execution order */}
       <div className="rounded-lg border border-border p-3">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2.5">
           <span className="text-xs font-medium">Engine Pipeline — 19 engines</span>
-          <span className="text-[10px] text-muted font-mono">{decision.pipeline.length} steps</span>
+          <span className="text-[10px] text-muted font-mono">
+            {decision.pipeline.length} steps · {totalLatency}ms
+          </span>
         </div>
-        <div className="space-y-1">
-          {decision.pipeline.map((run, idx) => (
-            <div
-              key={`${run.descriptor.id}-${idx}`}
-              className={`flex items-start gap-2 rounded-md border border-border/60 px-2 py-1.5 ${run.skipped ? 'opacity-60' : ''}`}
-            >
-              <span className="text-[10px] font-mono text-muted w-6 shrink-0 mt-0.5 text-right">{run.descriptor.order}</span>
-              <span className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[run.result.status]}`} />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[11px] font-medium truncate">{run.descriptor.label}</span>
-                  <span className="text-[9px] font-mono px-1 py-px rounded bg-bg border border-border text-muted">
-                    {LAYER_LABEL[run.descriptor.layer]}
-                  </span>
-                  <span className="text-[9px] font-mono text-muted">v{run.result.engine_version}</span>
-                </div>
-                <p className="text-[10px] text-muted mt-0.5 break-words">{run.verdict}</p>
+        <ol className="space-y-2">
+          {groupByLayer(decision.pipeline).map((group) => (
+            <li key={group.layer}>
+              <p className="text-[9px] uppercase tracking-[0.12em] text-muted mb-1">{LAYER_LABEL[group.layer]}</p>
+              <div className="space-y-1">
+                {group.runs.map((run, idx) => (
+                  <div
+                    key={`${run.descriptor.id}-${idx}`}
+                    className={`flex items-start gap-2 rounded-md border border-border/60 bg-bg/40 px-2 py-1.5 transition-colors hover:border-border ${run.skipped ? 'opacity-55' : ''}`}
+                  >
+                    <span className="text-[10px] font-mono text-muted w-5 shrink-0 mt-0.5 text-right tabular-nums">
+                      {run.descriptor.order}
+                    </span>
+                    <span
+                      className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[run.result.status]}`}
+                      title={run.result.status}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="text-[11px] font-medium leading-tight">{run.descriptor.label}</span>
+                        <span className="text-[9px] font-mono text-muted">v{run.result.engine_version}</span>
+                      </div>
+                      <p className="text-[10px] text-muted mt-0.5 break-words leading-snug">{run.verdict}</p>
+                    </div>
+                    <div className="text-right shrink-0 leading-tight">
+                      <p className={`text-[11px] font-semibold tabular-nums ${STATUS_TEXT[run.result.status]}`}>
+                        {(run.result.confidence * 100).toFixed(0)}%
+                      </p>
+                      <p className="text-[9px] text-muted font-mono tabular-nums">{run.result.latency_ms}ms</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="text-right shrink-0">
-                <p className={`text-[11px] font-semibold ${STATUS_TEXT[run.result.status]}`}>
-                  {(run.result.confidence * 100).toFixed(0)}%
-                </p>
-                <p className="text-[9px] text-muted font-mono">{run.result.latency_ms}ms</p>
-              </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
 
       <div className="flex flex-wrap gap-1.5">
