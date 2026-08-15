@@ -156,8 +156,15 @@ export function runMasterDecision(input: MasterDecisionInput): MasterDecision {
     : 'No market data available');
 
   const halted = (reason: string, reasons: string[]): MasterDecision => {
-    for (const d of ENGINE_REGISTRY.slice(1)) pipeline.push(pending(d, reason));
+    // Keep the halted pipeline in the same spec order as a live run:
+    // engines 2..14, contradiction search + risk gate, then 15..19.
+    for (const d of ENGINE_REGISTRY.slice(1, 14)) pipeline.push(pending(d, reason));
     pipeline.push(pending(CONTRADICTION_DESCRIPTOR, reason));
+    pipeline.push(pending(
+      { id: 'risk_gate', order: 15, label: 'Risk Gate (authoritative)', layer: 'risk', version: RISK_GATE_VERSION, responsibility: 'Final veto over execution and position size; cannot be bypassed.' },
+      reason,
+    ));
+    for (const d of ENGINE_REGISTRY.slice(14)) pipeline.push(pending(d, reason));
     return {
       contextId, symbol, timeframe,
       action: 'NO_TRADE',
