@@ -11,12 +11,12 @@ const predictInput = z.object({
 export const predictML = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => predictInput.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { runPrediction, checkRate } = await import("./ml-predict.server");
+    const { runPrediction, consumeRate } = await import("./ml-predict.server");
     const admin = supabaseAdmin as never;
 
-    if (!(await checkRate(admin, `predict-${data.pair}-${data.timeframe}`, 30))) {
+    if (!(await consumeRate(admin, context.userId, "predict", 30))) {
       return { error: "Rate limit exceeded" as const };
     }
     try {
@@ -30,12 +30,12 @@ export const predictML = createServerFn({ method: "POST" })
 export const retrainML = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => predictInput.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { runRetrain, checkRate } = await import("./ml-predict.server");
+    const { runRetrain, consumeRate } = await import("./ml-predict.server");
     const admin = supabaseAdmin as never;
 
-    if (!(await checkRate(admin, "retrain", 2))) {
+    if (!(await consumeRate(admin, context.userId, "retrain", 2))) {
       return { error: "Rate limit exceeded" as const };
     }
     try {
@@ -74,9 +74,15 @@ When users ask about specific signals they're seeing, explain what the indicator
 export const askCoachFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => coachInput.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) return { error: "AI coach is not configured." };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { consumeRate } = await import("./ml-predict.server");
+    if (!(await consumeRate(supabaseAdmin as never, context.userId, "coach", 20))) {
+      return { error: "You are sending messages too quickly. Please wait a moment." };
+    }
 
     try {
       const { aiGatewayUrl, aiCoachModel } = serverConfig();
