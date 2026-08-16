@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Radar, RefreshCw, TrendingUp, TrendingDown, Minus, Filter } from 'lucide-react';
-import { fetchKlines } from '../lib/binance';
+import { fetchKlines } from '../lib/market';
 import { makeDecision } from '../lib/decision';
 import { computeIndicators } from '../lib/indicators';
 import { detectAllPatterns } from '../lib/patterns';

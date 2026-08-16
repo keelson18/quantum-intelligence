@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import BacktestPanel from '../components/BacktestPanel';
 import { BarChart3, Save, Check, Database } from 'lucide-react';
-import { fetchKlines } from '../lib/binance';
+import { fetchKlines } from '../lib/market';
 import { runBacktest, walkForward, monteCarlo, DEFAULT_BACKTEST } from '../lib/backtest';
 import { makeDecision } from '../lib/decision';
 import { listBacktestRuns, saveBacktestRun } from '../lib/data/backtests.repo';

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Wallet, TrendingUp, TrendingDown, X, BarChart3, Clock } from 'lucide-react';
 import { fetchOpenPositions, fetchTradeHistory, closePosition, type PaperPosition, type PaperTrade } from '../lib/paperTrading';
 import { computePortfolioMetrics, computeExposure, computeTotalUnrealizedPnL, STARTING_EQUITY } from '../lib/portfolioEngine';
-import { subscribeLivePrice } from '../lib/binance';
+import { subscribeLivePrice } from '../lib/market';
 
 export default function PortfolioPage() {
   const [positions, setPositions] = useState<PaperPosition[]>([]);

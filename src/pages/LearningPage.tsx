@@ -1,7 +1,7 @@
 import AITrainingPanel from '../components/AITrainingPanel';
 import { GraduationCap } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
-import { fetchKlines } from '../lib/binance';
+import { fetchKlines } from '../lib/market';
 import type { Candle, Timeframe } from '../lib/types';
 
 export default function LearningPage() {

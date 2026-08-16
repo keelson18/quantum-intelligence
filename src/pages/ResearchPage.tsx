@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Microscope, RefreshCw, Grid3x3, FileText, TrendingUp, Activity, Gauge } from 'lucide-react';
-import { fetchKlines } from '../lib/binance';
+import { fetchKlines } from '../lib/market';
 import { computeIndicators, correlation } from '../lib/indicators';
 import { analyzeMarketStructure } from '../lib/structure';
 import { detectAllPatterns } from '../lib/patterns';

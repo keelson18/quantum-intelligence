@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ShieldAlert, RefreshCw, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
-import { fetchKlines } from '../lib/binance';
+import { fetchKlines } from '../lib/market';
 import { assessRisk, DEFAULT_PORTFOLIO, type PortfolioState } from '../lib/risk';
 import { CRYPTO_INSTRUMENTS, type Timeframe } from '../lib/types';
 import { getRiskState, saveRiskState } from '../lib/data/risk.repo';
