@@ -4,7 +4,7 @@ import {
   listWatchlists, createWatchlists, createWatchlist, deleteWatchlist,
   listWatchlistItems, addWatchlistItems, deleteWatchlistItem, swapWatchlistItemOrder,
 } from '../lib/data/watchlists.repo';
-import { subscribeLivePrice } from '../lib/binance';
+import { subscribeLivePrice } from '../lib/market';
 import { CRYPTO_INSTRUMENTS, ALL_INSTRUMENTS } from '../lib/types';
 
 interface Watchlist {

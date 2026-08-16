@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BrainCircuit, RefreshCw, TrendingUp, TrendingDown, Zap, Cpu, Target, Activity } from 'lucide-react';
-import { fetchKlines } from '../lib/binance';
+import { fetchKlines } from '../lib/market';
 import { makeDecision } from '../lib/decision';
 import { assessRisk, DEFAULT_PORTFOLIO } from '../lib/risk';
 import { CRYPTO_INSTRUMENTS, type Timeframe, type Side } from '../lib/types';

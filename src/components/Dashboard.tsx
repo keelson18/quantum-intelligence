@@ -8,7 +8,7 @@ import {
   ALL_INSTRUMENTS, CRYPTO_INSTRUMENTS, TIMEFRAMES,
   type Candle, type Timeframe, type MLPrediction, type MarketClass, type Regime,
 } from '../lib/types';
-import { fetchKlines, subscribeKlines } from '../lib/binance';
+import { fetchKlines, subscribeKlines } from '../lib/market';
 import { makeDecision, type DecisionResult } from '../lib/decision';
 import { runMasterDecision, type MasterDecision } from '../lib/engines/masterDecision';
 import { recordMasterDecision } from '../lib/intelligenceClient';

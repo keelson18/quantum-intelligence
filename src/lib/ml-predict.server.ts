@@ -257,9 +257,9 @@ function ensemblePredict(models: ModelMember[], x: number[]): number {
 // ============================================================================
 
 async function fetchCandles(symbol: string, timeframe: string, limit = 1000): Promise<Candle[]> {
-  const url = `${BINANCE}/api/v3/klines?symbol=${symbol}&interval=${timeframe}&limit=${limit}`;
+  const url = `${serverConfig().marketRestUrl}/api/v3/klines?symbol=${symbol}&interval=${timeframe}&limit=${limit}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Binance ${res.status}`);
+  if (!res.ok) throw new Error(`Market data ${res.status}`);
   const raw = (await res.json()) as unknown[][];
   return raw.map((k) => ({
     time: Math.floor((k[0] as number) / 1000),
@@ -271,11 +271,26 @@ async function fetchCandles(symbol: string, timeframe: string, limit = 1000): Pr
   }));
 }
 
-export async function checkRate(supabase: AdminClient, key: string, maxPerMin: number): Promise<boolean> {
-  const now = Date.now();
-  const windowStart = new Date(now - 60000).toISOString();
-  const { data } = await supabase.from('ml_predictions').select('created_at').eq('symbol', `__rl__${key}`).gte('created_at', windowStart);
-  return (data?.length ?? 0) < maxPerMin;
+// Per-user sliding-window rate limit. Records a marker row for every allowed
+// call, so repeated invocations actually get blocked.
+export async function consumeRate(
+  supabase: AdminClient,
+  userId: string,
+  action: string,
+  maxPerMin: number,
+): Promise<boolean> {
+  const windowStart = new Date(Date.now() - 60_000).toISOString();
+  const { count } = await supabase
+    .from('rate_limit_events')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('action', action)
+    .gte('created_at', windowStart);
+
+  if ((count ?? 0) >= maxPerMin) return false;
+
+  await supabase.from('rate_limit_events').insert({ user_id: userId, action });
+  return true;
 }
 
 

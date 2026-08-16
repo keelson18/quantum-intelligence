@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ScanSearch, RefreshCw, TrendingUp, TrendingDown } from 'lucide-react';
-import { fetchKlines } from '../lib/binance';
+import { fetchKlines } from '../lib/market';
 import { detectAllPatterns } from '../lib/patterns';
 import { CRYPTO_INSTRUMENTS, type Timeframe, type PatternHit } from '../lib/types';
 

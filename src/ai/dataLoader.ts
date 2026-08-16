@@ -5,7 +5,7 @@
 // ============================================================================
 
 import { supabase } from '../lib/supabase';
-import { fetchKlines } from '../lib/binance';
+import { fetchKlines } from '../lib/market';
 import { computeIndicators } from '../lib/indicators';
 import { analyzeMarketStructure } from '../lib/structure';
 import { analyzeSmartMoney } from '../lib/structure';

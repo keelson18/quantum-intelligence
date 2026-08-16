@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Terminal, TrendingUp, TrendingDown, Wifi, WifiOff, Send } from 'lucide-react';
-import { fetchKlines, subscribeKlines, subscribeLivePrice, fetchOrderBook, type OrderBook } from '../lib/binance';
+import { fetchKlines, subscribeKlines, subscribeLivePrice, fetchOrderBook, type OrderBook } from '../lib/market';
 import { CRYPTO_INSTRUMENTS, type Candle, type Timeframe, type Side } from '../lib/types';
 import { openPosition, closePosition, fetchOpenPositions, type PaperPosition } from '../lib/paperTrading';
 

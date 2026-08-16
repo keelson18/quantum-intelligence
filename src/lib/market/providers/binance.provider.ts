@@ -1,6 +1,6 @@
-import type { Candle, Timeframe } from './types';
-import { TIMEFRAMES } from './types';
-import { APP_CONFIG } from '../config/env';
+import type { Candle, Timeframe } from '../../types';
+import { TIMEFRAMES } from '../../types';
+import { APP_CONFIG } from '../../../config/env';
 
 const REST = APP_CONFIG.marketData.restUrl;
 const WS = APP_CONFIG.marketData.wsUrl;
@@ -181,3 +181,27 @@ export function subscribeKlines(
     try { ws?.close(); } catch { /* noop */ }
   };
 }
+
+// ============================================================================
+// Provider adapter — the only place that knows about Binance symbols.
+// ============================================================================
+
+import type { MarketDataProvider } from '../provider';
+import { resolveInstrument } from '../instruments';
+
+function providerSymbol(canonical: string): string {
+  const instrument = resolveInstrument(canonical);
+  return (instrument?.symbol ?? canonical.replace('/', '')).toUpperCase();
+}
+
+export const binanceProvider: MarketDataProvider = {
+  id: 'binance',
+  toProviderSymbol: providerSymbol,
+  fetchCandles: (canonical, timeframe, limit) =>
+    fetchKlines(providerSymbol(canonical), timeframe, limit),
+  fetchOrderBook: (canonical, limit) => fetchOrderBook(providerSymbol(canonical), limit),
+  subscribePrices: (canonicals, onPrice, onStatus) =>
+    subscribeLivePrice(canonicals.map(providerSymbol), onPrice, onStatus),
+  subscribeCandles: (canonical, timeframe, onCandle, onStatus) =>
+    subscribeKlines(providerSymbol(canonical), timeframe, onCandle, onStatus),
+};
