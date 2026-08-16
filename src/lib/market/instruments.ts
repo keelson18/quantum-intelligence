@@ -5,7 +5,7 @@
 // id is `BASE/QUOTE`. Adapters map canonical -> provider symbol.
 // ============================================================================
 
-import { INSTRUMENTS } from '../types';
+import { ALL_INSTRUMENTS } from '../types';
 import type { Instrument } from '../types';
 
 /** Canonical id for an instrument, e.g. "BTC/USDT". */
@@ -16,7 +16,7 @@ export function canonicalId(instrument: Instrument): string {
 /** Accepts a canonical id or a legacy provider symbol and returns the instrument. */
 export function resolveInstrument(idOrSymbol: string): Instrument | undefined {
   const wanted = idOrSymbol.toUpperCase();
-  return (INSTRUMENTS as Instrument[]).find(
+  return ALL_INSTRUMENTS.find(
     (i) => canonicalId(i) === wanted || i.symbol.toUpperCase() === wanted,
   );
 }
