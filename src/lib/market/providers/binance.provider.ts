@@ -1,6 +1,6 @@
-import type { Candle, Timeframe } from './types';
-import { TIMEFRAMES } from './types';
-import { APP_CONFIG } from '../config/env';
+import type { Candle, Timeframe } from '../../types';
+import { TIMEFRAMES } from '../../types';
+import { APP_CONFIG } from '../../../config/env';
 
 const REST = APP_CONFIG.marketData.restUrl;
 const WS = APP_CONFIG.marketData.wsUrl;
