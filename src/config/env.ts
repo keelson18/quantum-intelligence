@@ -19,4 +19,10 @@ export const APP_CONFIG = {
     /** Default number of candles requested per history load. */
     historyLimit: Number(required('VITE_MARKET_HISTORY_LIMIT', '1000')),
   },
+  paperTrading: {
+    /** Taker fee per leg, as a fraction of notional (0.001 = 10 bps). */
+    feeRate: Number(required('VITE_PAPER_FEE_RATE', '0.001')),
+    /** Assumed adverse slippage on spread-crossing fills, as a fraction. */
+    slippageRate: Number(required('VITE_PAPER_SLIPPAGE_RATE', '0.0005')),
+  },
 } as const;
