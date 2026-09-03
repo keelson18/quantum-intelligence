@@ -1,10 +1,19 @@
-import { supabase } from './supabase';
+// ============================================================================
+// Application tier — Paper Trading Engine (Roadmap Phase 10 / 11).
+// Orchestrates the pure execution simulation (domain) and the paper repository
+// (data access). No direct database calls and no real-money execution ever.
+// ============================================================================
 
-// ============================================================================
-// Paper Trading Engine
-// Simulated order execution, position management, SL/TP/trailing stop.
-// No real money is ever at risk — this is a training/intelligence tool only.
-// ============================================================================
+import { APP_CONFIG } from '../config/env';
+import {
+  simulateFill,
+  simulateExitFill,
+  realisedPnL,
+  type ExecutionAssumptions,
+} from './execution/simulation';
+import * as repo from './data/paper.repo';
+import { tradeReviewEngine, type ClosedTradeInput } from './engines/tradeReview';
+import { ENGINE_REGISTRY } from './engines/registry';
 
 export type OrderType = 'market' | 'limit' | 'stop';
 export type PositionSide = 'long' | 'short';
@@ -32,6 +41,9 @@ export interface PaperPosition {
   pnl: number | null;
   pnl_pct: number | null;
   notes: string | null;
+  fees?: number;
+  slippage?: number;
+  requested_price?: number | null;
 }
 
 export interface PaperTrade {
@@ -50,6 +62,9 @@ export interface PaperTrade {
   exit_time: string;
   hold_duration_hours: number;
   exit_reason: ExitReason;
+  fees?: number;
+  slippage?: number;
+  gross_pnl?: number | null;
 }
 
 export interface OpenOrderInput {
@@ -67,7 +82,15 @@ export interface OpenOrderInput {
   notes?: string | null;
 }
 
-// ---- Position P&L calculation ----
+/** Execution assumptions come from configuration, never from literals. */
+export function executionAssumptions(): ExecutionAssumptions {
+  return {
+    feeRate: APP_CONFIG.paperTrading.feeRate,
+    slippageRate: APP_CONFIG.paperTrading.slippageRate,
+  };
+}
+
+// ---- Position P&L calculation (unrealised, gross of exit fees) ----
 export function computeUnrealizedPnL(
   pos: Pick<PaperPosition, 'side' | 'quantity' | 'entry_price'>,
   currentPrice: number,
@@ -75,21 +98,36 @@ export function computeUnrealizedPnL(
   const dir = pos.side === 'long' ? 1 : -1;
   const pnl = (currentPrice - pos.entry_price) * dir * pos.quantity;
   const cost = pos.entry_price * pos.quantity;
-  const pnlPct = cost > 0 ? pnl / cost : 0;
-  return { pnl, pnlPct };
+  return { pnl, pnlPct: cost > 0 ? pnl / cost : 0 };
 }
 
 // ---- Open a new paper position ----
 export async function openPosition(input: OpenOrderInput, currentPrice: number): Promise<PaperPosition | null> {
-  const entryPrice = input.order_type === 'market' ? currentPrice : (input.limit_price ?? currentPrice);
-  const status: PositionStatus = input.order_type === 'market' ? 'open' : 'pending';
+  const isMarket = input.order_type === 'market';
+  const requested = isMarket ? currentPrice : (input.limit_price ?? currentPrice);
+  const status: PositionStatus = isMarket ? 'open' : 'pending';
 
-  const row = {
+  const fill = simulateFill(
+    {
+      side: input.side,
+      quantity: input.quantity,
+      requestedPrice: requested,
+      orderType: input.order_type,
+    },
+    executionAssumptions(),
+  );
+
+  const entryPrice = isMarket ? fill.fillPrice : requested;
+
+  const position = await repo.insertPosition<PaperPosition>({
     symbol: input.symbol,
     label: input.label,
     side: input.side,
     quantity: input.quantity,
     entry_price: entryPrice,
+    requested_price: requested,
+    fees: isMarket ? fill.fees : 0,
+    slippage: isMarket ? Math.abs(fill.slippage) : 0,
     stop_loss: input.stop_loss ?? null,
     take_profit: input.take_profit ?? null,
     trailing_stop_pct: input.trailing_stop_pct ?? null,
@@ -99,19 +137,25 @@ export async function openPosition(input: OpenOrderInput, currentPrice: number):
     strategy: input.strategy ?? null,
     ai_confidence: input.ai_confidence ?? null,
     notes: input.notes ?? null,
-  };
+  });
 
-  const { data, error } = await supabase
-    .from('paper_positions')
-    .insert(row)
-    .select()
-    .single();
+  if (!position) return null;
 
-  if (error) {
-    console.error('Failed to open paper position:', error.message);
-    return null;
-  }
-  return data as PaperPosition;
+  await repo.recordExecutionEvent({
+    position_id: position.id,
+    event_type: isMarket ? 'order_filled' : 'order_submitted',
+    symbol: input.symbol,
+    side: input.side,
+    quantity: input.quantity,
+    requested_price: requested,
+    fill_price: isMarket ? entryPrice : null,
+    fees: isMarket ? fill.fees : 0,
+    slippage: isMarket ? Math.abs(fill.slippage) : 0,
+    reason: input.order_type,
+    metadata: { strategy: input.strategy ?? null, ai_confidence: input.ai_confidence ?? null },
+  });
+
+  return position;
 }
 
 // ---- Close a position at the current market price ----
@@ -120,56 +164,114 @@ export async function closePosition(
   currentPrice: number,
   exitReason: ExitReason = 'manual',
 ): Promise<PaperTrade | null> {
-  const { data: pos, error: fetchErr } = await supabase
-    .from('paper_positions')
-    .select('*')
-    .eq('id', positionId)
-    .single();
+  const pos = await repo.getPosition<PaperPosition>(positionId);
+  if (!pos) return null;
 
-  if (fetchErr || !pos) {
-    console.error('Position not found:', fetchErr?.message);
-    return null;
-  }
+  const assumptions = executionAssumptions();
+  const exitFill = simulateExitFill(
+    { side: pos.side, quantity: pos.quantity, requestedPrice: currentPrice, orderType: 'market' },
+    assumptions,
+  );
 
-  const { pnl, pnlPct } = computeUnrealizedPnL(pos as PaperPosition, currentPrice);
+  const entryFees = pos.fees ?? 0;
+  const { grossPnl, netPnl, netPnlPct } = realisedPnL({
+    side: pos.side,
+    quantity: pos.quantity,
+    entryPrice: pos.entry_price,
+    exitPrice: exitFill.fillPrice,
+    entryFees,
+    exitFees: exitFill.fees,
+  });
+
   const exitTime = new Date().toISOString();
-  const entryTime = new Date(pos.opened_at).getTime();
-  const holdHours = (Date.now() - entryTime) / 3_600_000;
+  const holdHours = (Date.now() - new Date(pos.opened_at).getTime()) / 3_600_000;
 
-  const tradeRow = {
+  const trade = await repo.insertTrade<PaperTrade>({
     symbol: pos.symbol,
     label: pos.label,
     side: pos.side,
     quantity: pos.quantity,
     entry_price: pos.entry_price,
-    exit_price: currentPrice,
-    pnl,
-    pnl_pct: pnlPct,
+    exit_price: exitFill.fillPrice,
+    pnl: netPnl,
+    pnl_pct: netPnlPct,
+    gross_pnl: grossPnl,
+    fees: entryFees + exitFill.fees,
+    slippage: (pos.slippage ?? 0) + Math.abs(exitFill.slippage),
     strategy: pos.strategy,
     ai_confidence: pos.ai_confidence,
     entry_time: pos.opened_at,
     exit_time: exitTime,
     hold_duration_hours: holdHours,
     exit_reason: exitReason,
+  });
+
+  if (!trade) return null;
+
+  await repo.updatePosition(positionId, {
+    status: 'closed',
+    close_price: exitFill.fillPrice,
+    closed_at: exitTime,
+    pnl: netPnl,
+    pnl_pct: netPnlPct,
+    fees: entryFees + exitFill.fees,
+  });
+
+  await repo.recordExecutionEvent({
+    position_id: positionId,
+    trade_id: trade.id,
+    event_type: 'position_closed',
+    symbol: pos.symbol,
+    side: pos.side,
+    quantity: pos.quantity,
+    requested_price: currentPrice,
+    fill_price: exitFill.fillPrice,
+    fees: exitFill.fees,
+    slippage: Math.abs(exitFill.slippage),
+    reason: exitReason,
+    metadata: { gross_pnl: grossPnl, net_pnl: netPnl },
+  });
+
+  // Phase 11 — every closed paper trade produces a structured review.
+  await reviewClosedTrade(trade, pos);
+
+  return trade;
+}
+
+/** Runs Engine 17 on a single closed trade and persists the structured review. */
+export async function reviewClosedTrade(trade: PaperTrade, pos?: PaperPosition | null): Promise<void> {
+  const input: ClosedTradeInput = {
+    id: trade.id,
+    symbol: trade.symbol,
+    side: trade.side,
+    entry: trade.entry_price,
+    exit: trade.exit_price,
+    stopLoss: pos?.stop_loss ?? null,
+    takeProfit: pos?.take_profit ?? null,
+    pnl: trade.pnl,
+    pnlPct: trade.pnl_pct,
+    exitReason: trade.exit_reason,
+    strategy: trade.strategy,
+    aiConfidence: trade.ai_confidence,
+    holdHours: trade.hold_duration_hours,
   };
 
-  const { data: trade, error: tradeErr } = await supabase
-    .from('paper_trades')
-    .insert(tradeRow)
-    .select()
-    .single();
+  const result = tradeReviewEngine(`trade:${trade.id}`, [input]);
+  const review = result.result?.reviews[0];
+  if (!review) return;
 
-  if (tradeErr) {
-    console.error('Failed to record paper trade:', tradeErr.message);
-    return null;
-  }
-
-  await supabase
-    .from('paper_positions')
-    .update({ status: 'closed', close_price: currentPrice, closed_at: exitTime, pnl, pnl_pct: pnlPct })
-    .eq('id', positionId);
-
-  return trade as PaperTrade;
+  await repo.upsertTradeReview({
+    trade_id: trade.id,
+    symbol: trade.symbol,
+    outcome: review.outcome,
+    failure_class: review.failureClass,
+    thesis_assessment: review.thesisAssessment,
+    execution_assessment: review.executionAssessment,
+    risk_assessment: review.riskAssessment,
+    lessons: review.lessons,
+    r_multiple: review.rMultiple,
+    engine_version: ENGINE_REGISTRY[16].version,
+  });
 }
 
 // ---- Update trailing stop for a position ----
@@ -183,13 +285,19 @@ export async function updateTrailingStop(
     ? currentPrice * (1 - trailingPct / 100)
     : currentPrice * (1 + trailingPct / 100);
 
-  const { error } = await supabase
-    .from('paper_positions')
-    .update({ stop_loss: newStop })
-    .eq('id', positionId)
-    .eq('status', 'open');
-
-  return !error;
+  const ok = await repo.updatePosition(positionId, { stop_loss: newStop }, 'open');
+  if (ok) {
+    await repo.recordExecutionEvent({
+      position_id: positionId,
+      event_type: 'stop_updated',
+      symbol: '',
+      side,
+      requested_price: currentPrice,
+      reason: 'trailing',
+      metadata: { new_stop: newStop, trailing_pct: trailingPct },
+    });
+  }
+  return ok;
 }
 
 // ---- Check open positions against current price for SL/TP/trailing exits ----
@@ -228,53 +336,84 @@ export function checkPendingOrder(
 
 // ---- Fill a pending order ----
 export async function fillPendingOrder(positionId: string, fillPrice: number): Promise<boolean> {
-  const { error } = await supabase
-    .from('paper_positions')
-    .update({ status: 'open', entry_price: fillPrice, opened_at: new Date().toISOString() })
-    .eq('id', positionId)
-    .eq('status', 'pending');
-  return !error;
+  const pos = await repo.getPosition<PaperPosition>(positionId);
+  if (!pos) return false;
+
+  const fill = simulateFill(
+    {
+      side: pos.side,
+      quantity: pos.quantity,
+      requestedPrice: fillPrice,
+      orderType: pos.order_type,
+    },
+    executionAssumptions(),
+  );
+
+  const ok = await repo.updatePosition(
+    positionId,
+    {
+      status: 'open',
+      entry_price: fill.fillPrice,
+      requested_price: fillPrice,
+      fees: fill.fees,
+      slippage: Math.abs(fill.slippage),
+      opened_at: new Date().toISOString(),
+    },
+    'pending',
+  );
+
+  if (ok) {
+    await repo.recordExecutionEvent({
+      position_id: positionId,
+      event_type: 'order_filled',
+      symbol: pos.symbol,
+      side: pos.side,
+      quantity: pos.quantity,
+      requested_price: fillPrice,
+      fill_price: fill.fillPrice,
+      fees: fill.fees,
+      slippage: Math.abs(fill.slippage),
+      reason: pos.order_type,
+    });
+  }
+  return ok;
 }
 
 // ---- Cancel a pending order ----
 export async function cancelPendingOrder(positionId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('paper_positions')
-    .delete()
-    .eq('id', positionId)
-    .eq('status', 'pending');
-  return !error;
+  const pos = await repo.getPosition<PaperPosition>(positionId);
+  const ok = await repo.deletePendingPosition(positionId);
+  if (ok && pos) {
+    await repo.recordExecutionEvent({
+      position_id: positionId,
+      event_type: 'order_cancelled',
+      symbol: pos.symbol,
+      side: pos.side,
+      quantity: pos.quantity,
+      requested_price: pos.limit_price,
+      reason: 'cancelled_by_user',
+    });
+  }
+  return ok;
 }
 
-// ---- Fetch all open positions ----
-export async function fetchOpenPositions(): Promise<PaperPosition[]> {
-  const { data, error } = await supabase
-    .from('paper_positions')
-    .select('*')
-    .eq('status', 'open')
-    .order('opened_at', { ascending: false });
-  if (error) return [];
-  return (data ?? []) as PaperPosition[];
+// ---- Reads ----
+export function fetchOpenPositions(): Promise<PaperPosition[]> {
+  return repo.listPositionsByStatus<PaperPosition>('open', 'opened_at');
 }
 
-// ---- Fetch all pending orders ----
-export async function fetchPendingOrders(): Promise<PaperPosition[]> {
-  const { data, error } = await supabase
-    .from('paper_positions')
-    .select('*')
-    .eq('status', 'pending')
-    .order('created_at', { ascending: false });
-  if (error) return [];
-  return (data ?? []) as PaperPosition[];
+export function fetchPendingOrders(): Promise<PaperPosition[]> {
+  return repo.listPositionsByStatus<PaperPosition>('pending', 'created_at');
 }
 
-// ---- Fetch closed trade history ----
-export async function fetchTradeHistory(limit = 100): Promise<PaperTrade[]> {
-  const { data, error } = await supabase
-    .from('paper_trades')
-    .select('*')
-    .order('exit_time', { ascending: false })
-    .limit(limit);
-  if (error) return [];
-  return (data ?? []) as PaperTrade[];
+export function fetchTradeHistory(limit = 100): Promise<PaperTrade[]> {
+  return repo.listTrades<PaperTrade>(limit);
+}
+
+export function fetchExecutionAudit(limit = 200) {
+  return repo.listExecutionEvents<Record<string, unknown>>(limit);
+}
+
+export function fetchTradeReviews(limit = 100) {
+  return repo.listTradeReviews(limit);
 }
