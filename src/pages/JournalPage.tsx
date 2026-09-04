@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BookOpen, Search, Plus, X, TrendingUp, TrendingDown, Lightbulb, Tag } from 'lucide-react';
 import { listJournalEntries, createJournalEntry, updateJournalEntry, deleteJournalEntry } from '../lib/data/journal.repo';
-import { fetchTradeHistory, type PaperTrade } from '../lib/paperTrading';
+import { fetchTradeHistory, fetchTradeReviews, type PaperTrade } from '../lib/paperTrading';
+import type { TradeReviewRow } from '../lib/data/paper.repo';
 import { computePortfolioMetrics } from '../lib/portfolioEngine';
 
 interface JournalEntry {
@@ -20,6 +21,7 @@ interface JournalEntry {
 export default function JournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [trades, setTrades] = useState<PaperTrade[]>([]);
+  const [reviews, setReviews] = useState<TradeReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterTag, setFilterTag] = useState('');
@@ -37,12 +39,14 @@ export default function JournalPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [je, tr] = await Promise.all([
+    const [je, tr, rv] = await Promise.all([
       listJournalEntries<JournalEntry>(),
       fetchTradeHistory(50),
+      fetchTradeReviews(50),
     ]);
     setEntries(je);
     setTrades(tr);
+    setReviews(rv);
     setLoading(false);
   }, []);
 
@@ -115,6 +119,49 @@ export default function JournalPage() {
         <StatCard label="Avg P&L" value={`$${metrics.expectancy.toFixed(0)}`} positive={metrics.expectancy >= 0} />
         <StatCard label="Best Trade" value={`$${metrics.bestTrade.toFixed(0)}`} positive />
       </div>
+
+      {/* Automated trade reviews — Engine 17 output, one per closed paper trade */}
+      {reviews.length > 0 && (
+        <section className="bg-surface border border-border rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Automated Trade Reviews</h2>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-bg text-muted font-mono">
+              {reviews[0].engine_version}
+            </span>
+            <span className="ml-auto text-[10px] text-muted">{reviews.length} reviewed</span>
+          </div>
+          <div className="space-y-2">
+            {reviews.slice(0, 8).map((r) => (
+              <div key={r.id} className="rounded-lg bg-bg border border-border/60 px-3 py-2.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-medium">{r.symbol}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                    r.outcome === 'win' ? 'bg-success/15 text-success'
+                      : r.outcome === 'loss' ? 'bg-danger/15 text-danger'
+                      : 'bg-bg text-muted'
+                  }`}>{r.outcome}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary/90">{r.failure_class}</span>
+                  {r.r_multiple != null && (
+                    <span className="text-[10px] text-muted font-mono">{r.r_multiple.toFixed(2)}R</span>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted mt-1.5">{r.thesis_assessment}</p>
+                <p className="text-[11px] text-muted">{r.execution_assessment}</p>
+                <p className="text-[11px] text-muted">{r.risk_assessment}</p>
+                {r.lessons.length > 0 && (
+                  <ul className="mt-1.5 space-y-0.5">
+                    {r.lessons.map((l) => (
+                      <li key={l} className="flex items-start gap-1.5 text-[11px] text-primary/80">
+                        <Lightbulb className="w-3 h-3 mt-0.5 shrink-0" />{l}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Search & filter */}
       <div className="flex items-center gap-3">
