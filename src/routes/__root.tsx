@@ -37,9 +37,15 @@ function NotFoundComponent() {
   );
 }
 
+/** Build-time configuration failures (e.g. backend env not inlined). */
+function isConfigError(error: Error): boolean {
+  return /Missing Supabase environment variable/i.test(error.message);
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const configError = isConfigError(error);
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
@@ -48,10 +54,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          {configError ? "Backend connection not configured" : "This page didn't load"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          {configError
+            ? "This build was produced without the backend connection settings. Rebuild or republish the app after the backend is connected."
+            : "Something went wrong on our end. You can try refreshing or head back home."}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
