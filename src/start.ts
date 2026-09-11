@@ -1,7 +1,15 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
+import { applySecurityHeaders } from "./lib/http/securityHeaders";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+
+// OWASP secure-headers baseline on every response, including error responses.
+const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
+  const result = await next();
+  if (result instanceof Response) return applySecurityHeaders(result);
+  return result;
+});
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
