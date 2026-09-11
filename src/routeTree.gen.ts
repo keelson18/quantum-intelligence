@@ -24,6 +24,7 @@ import { Route as ShellScannerRouteImport } from './routes/_shell/scanner'
 import { Route as ShellSettingsRouteImport } from './routes/_shell/settings'
 import { Route as ShellTerminalRouteImport } from './routes/_shell/terminal'
 import { Route as ShellWatchlistRouteImport } from './routes/_shell/watchlist'
+import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 
 const ShellRoute = ShellRouteImport.update({
   id: '/_shell',
@@ -99,6 +100,11 @@ const ShellWatchlistRoute = ShellWatchlistRouteImport.update({
   path: '/watchlist',
   getParentRoute: () => ShellRoute,
 } as any)
+const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
+  id: '/api/public/health',
+  path: '/api/public/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof ShellSettingsRoute
   '/terminal': typeof ShellTerminalRoute
   '/watchlist': typeof ShellWatchlistRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
 }
 export interface FileRoutesByTo {
   '/ai-center': typeof ShellAiCenterRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/terminal': typeof ShellTerminalRoute
   '/watchlist': typeof ShellWatchlistRoute
   '/': typeof ShellIndexRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/_shell/terminal': typeof ShellTerminalRoute
   '/_shell/watchlist': typeof ShellWatchlistRoute
   '/_shell/': typeof ShellIndexRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/terminal'
     | '/watchlist'
+    | '/api/public/health'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/ai-center'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/terminal'
     | '/watchlist'
     | '/'
+    | '/api/public/health'
   id:
     | '__root__'
     | '/_shell'
@@ -200,10 +211,12 @@ export interface FileRouteTypes {
     | '/_shell/terminal'
     | '/_shell/watchlist'
     | '/_shell/'
+    | '/api/public/health'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   ShellRoute: typeof ShellRouteWithChildren
+  ApiPublicHealthRoute: typeof ApiPublicHealthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -313,6 +326,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellWatchlistRouteImport
       parentRoute: typeof ShellRoute
     }
+    '/api/public/health': {
+      id: '/api/public/health'
+      path: '/api/public/health'
+      fullPath: '/api/public/health'
+      preLoaderRoute: typeof ApiPublicHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -354,6 +374,7 @@ const ShellRouteWithChildren = ShellRoute._addFileChildren(ShellRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   ShellRoute: ShellRouteWithChildren,
+  ApiPublicHealthRoute: ApiPublicHealthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

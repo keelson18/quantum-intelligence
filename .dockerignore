@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-ssr
+.output
+.nitro
+.tanstack
+.wrangler
+.git
+.github
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+coverage
+/tmp
+.lovable
