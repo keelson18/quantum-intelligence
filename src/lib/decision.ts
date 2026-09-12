@@ -1,9 +1,18 @@
-import type { Candle, MLPrediction, Recommendation, RiskAssessment, PatternHit, Signal, Timeframe, InstitutionalAnalysis } from './types';
-import { evaluateStrategies, collectOverlays } from './strategies';
-import { assessRisk, DEFAULT_PORTFOLIO, type PortfolioState } from './risk';
-import { detectAllPatterns } from './patterns';
-import { explainTrade } from './explain';
-import { runInstitutionalPipeline } from './institutionalEngine';
+import type {
+  Candle,
+  MLPrediction,
+  Recommendation,
+  RiskAssessment,
+  PatternHit,
+  Signal,
+  Timeframe,
+  InstitutionalAnalysis,
+} from "./types";
+import { evaluateStrategies, collectOverlays } from "./strategies";
+import { assessRisk, DEFAULT_PORTFOLIO, type PortfolioState } from "./risk";
+import { detectAllPatterns } from "./patterns";
+import { explainTrade } from "./explain";
+import { runInstitutionalPipeline } from "./institutionalEngine";
 
 // ============================================================================
 // Institutional Decision Engine
@@ -18,9 +27,9 @@ export interface DecisionResult {
   recommendation: Recommendation;
   allSignals: Signal[];
   patterns: PatternHit[];
-  overlays: import('./types').Overlay[];
-  regime: import('./types').Regime;
-  selectedStrategy: import('./types').StrategyEvaluation;
+  overlays: import("./types").Overlay[];
+  regime: import("./types").Regime;
+  selectedStrategy: import("./types").StrategyEvaluation;
   institutional: InstitutionalAnalysis | null;
 }
 
@@ -39,8 +48,8 @@ export function makeDecision(
   const patterns = detectAllPatterns(candles);
 
   // Build contributors from all non-neutral signals + ML.
-  const contributors: Recommendation['contributors'] = allSignals
-    .filter((s) => s.side !== 'neutral')
+  const contributors: Recommendation["contributors"] = allSignals
+    .filter((s) => s.side !== "neutral")
     .map((s) => ({
       source: s.strategy,
       side: s.side,
@@ -50,10 +59,10 @@ export function makeDecision(
     }));
 
   if (ml) {
-    const mlWeight = ml.confidence === 'high' ? 0.8 : ml.confidence === 'medium' ? 0.6 : 0.4;
+    const mlWeight = ml.confidence === "high" ? 0.8 : ml.confidence === "medium" ? 0.6 : 0.4;
     contributors.push({
       source: `ML Model v${ml.model_version}`,
-      side: ml.prediction === 'up' ? 'buy' : ml.prediction === 'down' ? 'sell' : 'neutral',
+      side: ml.prediction === "up" ? "buy" : ml.prediction === "down" ? "sell" : "neutral",
       weight: mlWeight,
       confidence: ml.probability,
       reason: `p=${ml.probability.toFixed(2)}, exp move ${ml.expected_move_pct.toFixed(2)}%`,
@@ -61,18 +70,19 @@ export function makeDecision(
   }
 
   // Weighted score from all contributors.
-  let weighted = 0, totalWeight = 0;
+  let weighted = 0,
+    totalWeight = 0;
   for (const c of contributors) {
-    const val = c.side === 'buy' ? 1 : c.side === 'sell' ? -1 : 0;
+    const val = c.side === "buy" ? 1 : c.side === "sell" ? -1 : 0;
     weighted += val * c.weight;
     totalWeight += c.weight;
   }
   const score = totalWeight > 0 ? weighted / totalWeight : 0;
-  const side = score > 0.15 ? 'buy' : score < -0.15 ? 'sell' : 'neutral';
+  const side = score > 0.15 ? "buy" : score < -0.15 ? "sell" : "neutral";
 
   // Risk assessment.
   let risk: RiskAssessment | undefined;
-  if (side !== 'neutral') {
+  if (side !== "neutral") {
     const assessed = assessRisk(candles, side, Math.abs(score), portfolio);
     if (assessed) risk = assessed;
   }
@@ -92,19 +102,30 @@ export function makeDecision(
 
   // Run institutional pipeline for confluence, trade grade, and evidence.
   const institutional = runInstitutionalPipeline(
-    candles, candleMap ?? { [timeframe]: candles }, ml, symbol, timeframe,
-    rec, patterns, portfolio, correlationSeries,
+    candles,
+    candleMap ?? { [timeframe]: candles },
+    ml,
+    symbol,
+    timeframe,
+    rec,
+    patterns,
+    portfolio,
+    correlationSeries,
   );
 
   // Adjust confidence and score using institutional analysis.
   if (institutional) {
-    const adjustedScore = side === 'buy' ? institutional.finalConfidence :
-                          side === 'sell' ? -institutional.finalConfidence : 0;
+    const adjustedScore =
+      side === "buy"
+        ? institutional.finalConfidence
+        : side === "sell"
+          ? -institutional.finalConfidence
+          : 0;
     rec.score = adjustedScore;
 
     // Upgrade to HOLD if confluence is too low.
-    if (institutional.confluence.total < 40 && side !== 'neutral') {
-      rec.side = 'neutral';
+    if (institutional.confluence.total < 40 && side !== "neutral") {
+      rec.side = "neutral";
       rec.score = 0;
     }
 

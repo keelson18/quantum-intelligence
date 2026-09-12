@@ -1,5 +1,5 @@
-import type { Candle, Side, BacktestMetrics, WalkForwardResult, MonteCarloResult } from './types';
-import { atr } from './indicators';
+import type { Candle, Side, BacktestMetrics, WalkForwardResult, MonteCarloResult } from "./types";
+import { atr } from "./indicators";
 
 // ============================================================================
 // Backtesting Suite
@@ -8,10 +8,10 @@ import { atr } from './indicators';
 // ============================================================================
 
 export interface BacktestConfig {
-  hold: number;           // bars to hold each trade
-  riskPerTrade: number;   // fraction of equity risked per trade
-  riskReward: number;     // take-profit / stop ratio
-  commissionPct: number;  // per-trade commission
+  hold: number; // bars to hold each trade
+  riskPerTrade: number; // fraction of equity risked per trade
+  riskReward: number; // take-profit / stop ratio
+  commissionPct: number; // per-trade commission
 }
 
 export const DEFAULT_BACKTEST: BacktestConfig = {
@@ -32,21 +32,23 @@ export function runBacktest(
   const equity = 100000;
   let balance = equity;
   const equityCurve: { time: number; equity: number }[] = [];
-  const trades: BacktestMetrics['trades'] = [];
-  let wins = 0, losses = 0;
-  let grossWin = 0, grossLoss = 0;
+  const trades: BacktestMetrics["trades"] = [];
+  let wins = 0,
+    losses = 0;
+  let grossWin = 0,
+    grossLoss = 0;
 
   for (let i = 30; i < candles.length - config.hold; i++) {
     const slice = candles.slice(0, i + 1);
     const sig = signalFn(slice);
-    if (!sig || sig.side === 'neutral') {
+    if (!sig || sig.side === "neutral") {
       equityCurve.push({ time: candles[i].time, equity: balance });
       continue;
     }
     const entry = candles[i].close;
     const a = atr(slice, 14);
-    const atrVal = a[a.length - 1] || (entry * 0.01);
-    const dir = sig.side === 'buy' ? 1 : -1;
+    const atrVal = a[a.length - 1] || entry * 0.01;
+    const dir = sig.side === "buy" ? 1 : -1;
     const stop = entry - dir * atrVal * 1.5;
     const target = entry + dir * atrVal * 1.5 * config.riskReward;
     const riskPerUnit = Math.abs(entry - stop);
@@ -59,10 +61,30 @@ export function runBacktest(
     let exitTime = candles[i + config.hold].time;
     let exitIndex = i + config.hold;
     for (let j = i + 1; j <= i + config.hold && j < candles.length; j++) {
-      if (sig.side === 'buy' && candles[j].low <= stop) { exit = stop; exitTime = candles[j].time; exitIndex = j; break; }
-      if (sig.side === 'buy' && candles[j].high >= target) { exit = target; exitTime = candles[j].time; exitIndex = j; break; }
-      if (sig.side === 'sell' && candles[j].high >= stop) { exit = stop; exitTime = candles[j].time; exitIndex = j; break; }
-      if (sig.side === 'sell' && candles[j].low <= target) { exit = target; exitTime = candles[j].time; exitIndex = j; break; }
+      if (sig.side === "buy" && candles[j].low <= stop) {
+        exit = stop;
+        exitTime = candles[j].time;
+        exitIndex = j;
+        break;
+      }
+      if (sig.side === "buy" && candles[j].high >= target) {
+        exit = target;
+        exitTime = candles[j].time;
+        exitIndex = j;
+        break;
+      }
+      if (sig.side === "sell" && candles[j].high >= stop) {
+        exit = stop;
+        exitTime = candles[j].time;
+        exitIndex = j;
+        break;
+      }
+      if (sig.side === "sell" && candles[j].low <= target) {
+        exit = target;
+        exitTime = candles[j].time;
+        exitIndex = j;
+        break;
+      }
     }
     const pnlRaw = (exit - entry) * dir * size;
     const commission = entry * size * config.commissionPct + exit * size * config.commissionPct;
@@ -71,8 +93,13 @@ export function runBacktest(
     balance += pnl;
     equityCurve.push({ time: candles[exitIndex].time, equity: balance });
 
-    if (pnl > 0) { wins++; grossWin += pnl; }
-    else { losses++; grossLoss += Math.abs(pnl); }
+    if (pnl > 0) {
+      wins++;
+      grossWin += pnl;
+    } else {
+      losses++;
+      grossLoss += Math.abs(pnl);
+    }
     trades.push({ entryTime: candles[i].time, exitTime, side: sig.side, entry, exit, pnl, pnlPct });
   }
 
@@ -94,8 +121,17 @@ export function runBacktest(
   const maxDrawdown = calcMaxDrawdown(equityCurve);
 
   return {
-    totalTrades, winRate, profitFactor, sharpe, sortino, maxDrawdown,
-    avgWin, avgLoss, expectancy, equityCurve, trades,
+    totalTrades,
+    winRate,
+    profitFactor,
+    sharpe,
+    sortino,
+    maxDrawdown,
+    avgWin,
+    avgLoss,
+    expectancy,
+    equityCurve,
+    trades,
   };
 }
 
@@ -142,24 +178,36 @@ export function walkForward(
   const inSample = runBacktest(candles.slice(0, split), signalFn, config);
   const outOfSample = runBacktest(candles, signalFn, config);
   // Efficiency: OOS expectancy / IS expectancy (how well does IS performance persist?).
-  const isReturn = inSample.equityCurve.length > 1
-    ? (inSample.equityCurve[inSample.equityCurve.length - 1].equity - inSample.equityCurve[0].equity) / inSample.equityCurve[0].equity
-    : 0;
-  const oosReturn = outOfSample.equityCurve.length > 1
-    ? (outOfSample.equityCurve[outOfSample.equityCurve.length - 1].equity - outOfSample.equityCurve[split].equity) / outOfSample.equityCurve[split].equity
-    : 0;
+  const isReturn =
+    inSample.equityCurve.length > 1
+      ? (inSample.equityCurve[inSample.equityCurve.length - 1].equity -
+          inSample.equityCurve[0].equity) /
+        inSample.equityCurve[0].equity
+      : 0;
+  const oosReturn =
+    outOfSample.equityCurve.length > 1
+      ? (outOfSample.equityCurve[outOfSample.equityCurve.length - 1].equity -
+          outOfSample.equityCurve[split].equity) /
+        outOfSample.equityCurve[split].equity
+      : 0;
   const efficiency = isReturn !== 0 ? oosReturn / isReturn : 0;
   return { inSample, outOfSample, efficiency };
 }
 
 // Monte Carlo simulation: resample the trade sequence with replacement N times
 // to estimate the distribution of returns and worst-case drawdown.
-export function monteCarlo(
-  metrics: BacktestMetrics,
-  simulations = 1000,
-): MonteCarloResult {
+export function monteCarlo(metrics: BacktestMetrics, simulations = 1000): MonteCarloResult {
   if (metrics.trades.length < 5) {
-    return { medianReturn: 0, p5Return: 0, p95Return: 0, medianMaxDrawdown: 0, worstMaxDrawdown: 0, ruinProbability: 0, simulations, sampleCurves: [] };
+    return {
+      medianReturn: 0,
+      p5Return: 0,
+      p95Return: 0,
+      medianMaxDrawdown: 0,
+      worstMaxDrawdown: 0,
+      ruinProbability: 0,
+      simulations,
+      sampleCurves: [],
+    };
   }
   const returns = metrics.trades.map((t) => t.pnlPct);
   const finalReturns: number[] = [];
@@ -176,11 +224,13 @@ export function monteCarlo(
     for (let i = 0; i < returns.length; i++) {
       // Random trade from the sequence.
       const r = returns[Math.floor(Math.random() * returns.length)];
-      equity *= (1 + r);
+      equity *= 1 + r;
       if (equity > peak) peak = equity;
       const dd = (peak - equity) / peak;
       if (dd > maxDD) maxDD = dd;
-      if (equity <= startingEquity * 0.5) { break; }
+      if (equity <= startingEquity * 0.5) {
+        break;
+      }
       curve.push({ time: i + 1, equity });
     }
     finalReturns.push((equity - startingEquity) / startingEquity);

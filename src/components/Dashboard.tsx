@@ -1,49 +1,69 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Wifi, WifiOff, TrendingUp, TrendingDown, Minus,
-  RefreshCw, Brain, Layers, Zap, Search,
-} from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+  Wifi,
+  WifiOff,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  RefreshCw,
+  Brain,
+  Layers,
+  Zap,
+  Search,
+} from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 import {
-  ALL_INSTRUMENTS, CRYPTO_INSTRUMENTS, TIMEFRAMES,
-  type Candle, type Timeframe, type MLPrediction, type MarketClass, type Regime,
-} from '../lib/types';
-import { fetchKlines, subscribeKlines } from '../lib/market';
-import { makeDecision, type DecisionResult } from '../lib/decision';
-import { runMasterDecision, type MasterDecision } from '../lib/engines/masterDecision';
-import { recordMasterDecision } from '../lib/intelligenceClient';
-import MasterDecisionPanel from './MasterDecisionPanel';
-import { fetchMLPrediction, fetchCachedMLPrediction } from '../lib/mlClient';
-import { runBacktest, walkForward, monteCarlo, DEFAULT_BACKTEST } from '../lib/backtest';
-import type { BacktestMetrics, MonteCarloResult, WalkForwardResult } from '../lib/types';
-import PriceChart from './PriceChart';
-import KineticCoach from './KineticCoach';
-import BacktestPanel from './BacktestPanel';
-import ExplanationPanel from './ExplanationPanel';
-import { InstitutionalPanel } from './InstitutionalPanel';
-import AITrainingPanel from './AITrainingPanel';
+  ALL_INSTRUMENTS,
+  CRYPTO_INSTRUMENTS,
+  TIMEFRAMES,
+  type Candle,
+  type Timeframe,
+  type MLPrediction,
+  type MarketClass,
+  type Regime,
+} from "../lib/types";
+import { fetchKlines, subscribeKlines } from "../lib/market";
+import { makeDecision, type DecisionResult } from "../lib/decision";
+import { runMasterDecision, type MasterDecision } from "../lib/engines/masterDecision";
+import { recordMasterDecision } from "../lib/intelligenceClient";
+import MasterDecisionPanel from "./MasterDecisionPanel";
+import { fetchMLPrediction, fetchCachedMLPrediction } from "../lib/mlClient";
+import { runBacktest, walkForward, monteCarlo, DEFAULT_BACKTEST } from "../lib/backtest";
+import type { BacktestMetrics, MonteCarloResult, WalkForwardResult } from "../lib/types";
+import PriceChart from "./PriceChart";
+import KineticCoach from "./KineticCoach";
+import BacktestPanel from "./BacktestPanel";
+import ExplanationPanel from "./ExplanationPanel";
+import { InstitutionalPanel } from "./InstitutionalPanel";
+import AITrainingPanel from "./AITrainingPanel";
 
-type WsStatus = 'connecting' | 'open' | 'closed' | 'reconnecting';
+type WsStatus = "connecting" | "open" | "closed" | "reconnecting";
 
 const REGIME_LABELS: Record<Regime, string> = {
-  trend_up: 'Uptrend', trend_down: 'Downtrend', range: 'Ranging',
-  consolidation: 'Consolidation', expansion: 'Expansion',
+  trend_up: "Uptrend",
+  trend_down: "Downtrend",
+  range: "Ranging",
+  consolidation: "Consolidation",
+  expansion: "Expansion",
 };
 
 const REGIME_COLORS: Record<Regime, string> = {
-  trend_up: 'text-success', trend_down: 'text-danger',
-  range: 'text-warning', consolidation: 'text-muted', expansion: 'text-primary',
+  trend_up: "text-success",
+  trend_down: "text-danger",
+  range: "text-warning",
+  consolidation: "text-muted",
+  expansion: "text-primary",
 };
 
 export default function Dashboard() {
   const { theme } = useTheme();
-  const [symbol, setSymbol] = useState('BTCUSDT');
-  const [marketFilter, setMarketFilter] = useState<MarketClass | 'all'>('crypto');
-  const [search, setSearch] = useState('');
-  const [timeframe, setTimeframe] = useState<Timeframe>('1h');
+  const [symbol, setSymbol] = useState("BTCUSDT");
+  const [marketFilter, setMarketFilter] = useState<MarketClass | "all">("crypto");
+  const [search, setSearch] = useState("");
+  const [timeframe, setTimeframe] = useState<Timeframe>("1h");
   const [candles, setCandles] = useState<Candle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [wsStatus, setWsStatus] = useState<WsStatus>('connecting');
+  const [wsStatus, setWsStatus] = useState<WsStatus>("connecting");
   const [livePrice, setLivePrice] = useState<number | null>(null);
   const [ml, setMl] = useState<MLPrediction | null>(null);
   const [mlLoading, setMlLoading] = useState(false);
@@ -55,16 +75,23 @@ export default function Dashboard() {
   const [btLoading, setBtLoading] = useState(false);
   const candlesRef = useRef<Candle[]>([]);
 
-  useEffect(() => { candlesRef.current = candles; }, [candles]);
+  useEffect(() => {
+    candlesRef.current = candles;
+  }, [candles]);
 
   const instrument = ALL_INSTRUMENTS.find((i) => i.symbol === symbol) ?? CRYPTO_INSTRUMENTS[0];
 
   // Filtered instrument list for the selector.
   const filteredInstruments = useMemo(() => {
-    let list = marketFilter === 'all' ? ALL_INSTRUMENTS : ALL_INSTRUMENTS.filter((i) => i.market === marketFilter);
+    let list =
+      marketFilter === "all"
+        ? ALL_INSTRUMENTS
+        : ALL_INSTRUMENTS.filter((i) => i.market === marketFilter);
     if (search) {
       const q = search.toLowerCase();
-      list = list.filter((i) => i.label.toLowerCase().includes(q) || i.symbol.toLowerCase().includes(q));
+      list = list.filter(
+        (i) => i.label.toLowerCase().includes(q) || i.symbol.toLowerCase().includes(q),
+      );
     }
     return list;
   }, [marketFilter, search]);
@@ -82,7 +109,7 @@ export default function Dashboard() {
 
     if (!instrument.live) {
       setLoading(false);
-      setWsStatus('closed');
+      setWsStatus("closed");
       return;
     }
 
@@ -99,18 +126,29 @@ export default function Dashboard() {
       }
     })();
 
-    const unsub = subscribeKlines(symbol, timeframe, (candle) => {
-      setCandles((prev) => {
-        const arr = [...prev];
-        const last = arr[arr.length - 1];
-        if (last && last.time === candle.time) arr[arr.length - 1] = candle;
-        else if (!last || candle.time > last.time) { arr.push(candle); if (arr.length > 1500) arr.shift(); }
-        return arr;
-      });
-      setLivePrice(candle.close);
-    }, (status) => setWsStatus(status));
+    const unsub = subscribeKlines(
+      symbol,
+      timeframe,
+      (candle) => {
+        setCandles((prev) => {
+          const arr = [...prev];
+          const last = arr[arr.length - 1];
+          if (last && last.time === candle.time) arr[arr.length - 1] = candle;
+          else if (!last || candle.time > last.time) {
+            arr.push(candle);
+            if (arr.length > 1500) arr.shift();
+          }
+          return arr;
+        });
+        setLivePrice(candle.close);
+      },
+      (status) => setWsStatus(status),
+    );
 
-    return () => { disposed = true; unsub(); };
+    return () => {
+      disposed = true;
+      unsub();
+    };
   }, [symbol, timeframe, instrument.live]);
 
   // Fetch cached ML prediction instantly, then live.
@@ -121,7 +159,9 @@ export default function Dashboard() {
       const cached = await fetchCachedMLPrediction(symbol, timeframe);
       if (!cancelled && cached) setMl(cached);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [symbol, timeframe, instrument.live]);
 
   const refreshML = async () => {
@@ -136,20 +176,30 @@ export default function Dashboard() {
   useEffect(() => {
     if (!instrument.live) return;
     let disposed = false;
-    const tfs: Timeframe[] = ['1d', '4h', '1h', '15m'];
+    const tfs: Timeframe[] = ["1d", "4h", "1h", "15m"];
     (async () => {
       const map: Partial<Record<Timeframe, Candle[]>> = {};
       for (const tf of tfs) {
-        try { map[tf] = await fetchKlines(symbol, tf, 300); } catch { /* skip */ }
+        try {
+          map[tf] = await fetchKlines(symbol, tf, 300);
+        } catch {
+          /* skip */
+        }
       }
       if (!disposed) setMtfCandles(map);
     })();
-    return () => { disposed = true; };
+    return () => {
+      disposed = true;
+    };
   }, [symbol, instrument.live]);
 
   // Recompute the full v1.1 pipeline whenever candles or ML change.
   useEffect(() => {
-    if (candles.length < 60 || !instrument.live) { setDecision(null); setMaster(null); return; }
+    if (candles.length < 60 || !instrument.live) {
+      setDecision(null);
+      setMaster(null);
+      return;
+    }
     const candleMap = { ...mtfCandles, [timeframe]: candles };
     const md = runMasterDecision({ candles, symbol, timeframe, ml, candleMap });
     setMaster(md);
@@ -167,7 +217,7 @@ export default function Dashboard() {
         const signalFn = (slice: Candle[]) => {
           if (slice.length < 60) return null;
           const res = makeDecision(slice, null, symbol, timeframe);
-          if (!res || res.recommendation.side === 'neutral') return null;
+          if (!res || res.recommendation.side === "neutral") return null;
           return { side: res.recommendation.side, confidence: Math.abs(res.recommendation.score) };
         };
         const metrics = runBacktest(candles, signalFn, DEFAULT_BACKTEST);
@@ -177,7 +227,7 @@ export default function Dashboard() {
         setWfResult(wf);
         setMcResult(mc);
       } catch (e) {
-        console.error('backtest error', e);
+        console.error("backtest error", e);
       } finally {
         setBtLoading(false);
       }
@@ -195,7 +245,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-
       <div className="px-4 lg:px-6 py-4">
         {/* Top bar with WS status */}
         <div className="flex items-center justify-between mb-3">
@@ -216,7 +265,7 @@ export default function Dashboard() {
             </div>
             <select
               value={marketFilter}
-              onChange={(e) => setMarketFilter(e.target.value as MarketClass | 'all')}
+              onChange={(e) => setMarketFilter(e.target.value as MarketClass | "all")}
               className="px-2.5 py-2 rounded-lg bg-surface border border-border text-text focus:outline-none focus:border-primary text-sm"
             >
               <option value="all">All</option>
@@ -233,7 +282,8 @@ export default function Dashboard() {
             >
               {filteredInstruments.map((p) => (
                 <option key={p.symbol} value={p.symbol}>
-                  {p.label}{!p.live ? ' (no data)' : ''}
+                  {p.label}
+                  {!p.live ? " (no data)" : ""}
                 </option>
               ))}
             </select>
@@ -244,7 +294,7 @@ export default function Dashboard() {
                 key={tf.value}
                 onClick={() => setTimeframe(tf.value)}
                 className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                  timeframe === tf.value ? 'bg-primary text-black' : 'text-muted hover:text-text'
+                  timeframe === tf.value ? "bg-primary text-black" : "text-muted hover:text-text"
                 }`}
               >
                 {tf.label}
@@ -253,10 +303,18 @@ export default function Dashboard() {
           </div>
           {livePrice && (
             <div className="flex items-center gap-2">
-              <span className="text-lg font-semibold tabular-nums">${livePrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+              <span className="text-lg font-semibold tabular-nums">
+                ${livePrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </span>
               {priceChange !== null && (
-                <span className={`text-sm flex items-center gap-0.5 ${priceChange >= 0 ? 'text-success' : 'text-danger'}`}>
-                  {priceChange >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                <span
+                  className={`text-sm flex items-center gap-0.5 ${priceChange >= 0 ? "text-success" : "text-danger"}`}
+                >
+                  {priceChange >= 0 ? (
+                    <TrendingUp className="w-3.5 h-3.5" />
+                  ) : (
+                    <TrendingDown className="w-3.5 h-3.5" />
+                  )}
                   {Math.abs(priceChange).toFixed(2)}%
                 </span>
               )}
@@ -270,9 +328,10 @@ export default function Dashboard() {
             <Layers className="w-8 h-8 text-muted mx-auto mb-3" />
             <h3 className="text-sm font-medium mb-1">{instrument.label}</h3>
             <p className="text-xs text-muted max-w-md mx-auto">
-              This market requires a paid data provider (e.g. OANDA, Polygon.io, Alpha Vantage) to stream live prices.
-              It's included in the platform's instrument universe and architecture. Connect a data provider to enable
-              live analysis for forex, commodities, indices, and stocks.
+              This market requires a paid data provider (e.g. OANDA, Polygon.io, Alpha Vantage) to
+              stream live prices. It's included in the platform's instrument universe and
+              architecture. Connect a data provider to enable live analysis for forex, commodities,
+              indices, and stocks.
             </p>
           </div>
         )}
@@ -299,7 +358,9 @@ export default function Dashboard() {
                   <div className="flex items-center gap-2">
                     <Layers className="w-4 h-4 text-primary" />
                     <span className="text-xs text-muted">Regime:</span>
-                    <span className={`text-sm font-medium ${REGIME_COLORS[decision.regime]}`}>{REGIME_LABELS[decision.regime]}</span>
+                    <span className={`text-sm font-medium ${REGIME_COLORS[decision.regime]}`}>
+                      {REGIME_LABELS[decision.regime]}
+                    </span>
                   </div>
                   <div className="w-px h-4 bg-border" />
                   <div className="flex items-center gap-2">
@@ -311,7 +372,9 @@ export default function Dashboard() {
                     <>
                       <div className="w-px h-4 bg-border" />
                       <SideBadge side={rec.side} />
-                      <span className="text-xs text-muted tabular-nums ml-auto">Score: {rec.score.toFixed(3)}</span>
+                      <span className="text-xs text-muted tabular-nums ml-auto">
+                        Score: {rec.score.toFixed(3)}
+                      </span>
                     </>
                   )}
                 </div>
@@ -380,10 +443,10 @@ function WsIndicator({ status, live }: { status: WsStatus; live: boolean }) {
     );
   }
   const map: Record<WsStatus, { color: string; icon: typeof Wifi; label: string }> = {
-    open: { color: 'text-success', icon: Wifi, label: 'Live' },
-    connecting: { color: 'text-warning', icon: Wifi, label: 'Connecting' },
-    reconnecting: { color: 'text-warning', icon: WifiOff, label: 'Reconnecting' },
-    closed: { color: 'text-danger', icon: WifiOff, label: 'Off' },
+    open: { color: "text-success", icon: Wifi, label: "Live" },
+    connecting: { color: "text-warning", icon: Wifi, label: "Connecting" },
+    reconnecting: { color: "text-warning", icon: WifiOff, label: "Reconnecting" },
+    closed: { color: "text-danger", icon: WifiOff, label: "Off" },
   };
   const { color, icon: Icon, label } = map[status];
   return (
@@ -395,20 +458,23 @@ function WsIndicator({ status, live }: { status: WsStatus; live: boolean }) {
 }
 
 function SideBadge({ side }: { side: string }) {
-  const cfg = side === 'buy'
-    ? { color: 'bg-success/15 text-success', icon: TrendingUp, label: 'BUY' }
-    : side === 'sell'
-    ? { color: 'bg-danger/15 text-danger', icon: TrendingDown, label: 'SELL' }
-    : { color: 'bg-muted/15 text-muted', icon: Minus, label: 'NEUTRAL' };
+  const cfg =
+    side === "buy"
+      ? { color: "bg-success/15 text-success", icon: TrendingUp, label: "BUY" }
+      : side === "sell"
+        ? { color: "bg-danger/15 text-danger", icon: TrendingDown, label: "SELL" }
+        : { color: "bg-muted/15 text-muted", icon: Minus, label: "NEUTRAL" };
   const Icon = cfg.icon;
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${cfg.color}`}>
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${cfg.color}`}
+    >
       <Icon className="w-3 h-3" /> {cfg.label}
     </span>
   );
 }
 
-function RecommendationCard({ rec }: { rec: import('../lib/types').Recommendation }) {
+function RecommendationCard({ rec }: { rec: import("../lib/types").Recommendation }) {
   return (
     <div className="bg-surface border border-border rounded-xl p-4 animate-fade-in">
       <div className="flex items-center justify-between mb-3">
@@ -424,14 +490,16 @@ function RecommendationCard({ rec }: { rec: import('../lib/types').Recommendatio
         <div className="h-2 bg-border rounded-full overflow-hidden relative">
           <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border" />
           <div
-            className={`h-full transition-all ${rec.score >= 0 ? 'bg-success' : 'bg-danger'}`}
+            className={`h-full transition-all ${rec.score >= 0 ? "bg-success" : "bg-danger"}`}
             style={{
               width: `${Math.abs(rec.score) * 50}%`,
-              marginLeft: rec.score >= 0 ? '50%' : `${50 - Math.abs(rec.score) * 50}%`,
+              marginLeft: rec.score >= 0 ? "50%" : `${50 - Math.abs(rec.score) * 50}%`,
             }}
           />
         </div>
-        <div className="text-xs text-muted mt-1 tabular-nums">{rec.score.toFixed(3)} (−1 bearish · +1 bullish)</div>
+        <div className="text-xs text-muted mt-1 tabular-nums">
+          {rec.score.toFixed(3)} (−1 bearish · +1 bullish)
+        </div>
       </div>
 
       {/* Risk levels */}
@@ -462,7 +530,8 @@ function RecommendationCard({ rec }: { rec: import('../lib/types').Recommendatio
             </div>
           )}
           <div className="text-xs text-muted mb-3">
-            Kelly: {(rec.risk.kellyFraction * 100).toFixed(1)}% · ATR: {rec.risk.atr.toFixed(2)} · Exposure: {(rec.risk.portfolioExposure * 100).toFixed(1)}%
+            Kelly: {(rec.risk.kellyFraction * 100).toFixed(1)}% · ATR: {rec.risk.atr.toFixed(2)} ·
+            Exposure: {(rec.risk.portfolioExposure * 100).toFixed(1)}%
           </div>
         </>
       )}
@@ -471,12 +540,17 @@ function RecommendationCard({ rec }: { rec: import('../lib/types').Recommendatio
       <div className="space-y-1">
         <div className="text-xs text-muted mb-1.5">Contributing Signals</div>
         {rec.contributors.map((c, i) => (
-          <div key={i} className="flex items-center justify-between text-xs py-1.5 px-2 rounded bg-bg/50">
+          <div
+            key={i}
+            className="flex items-center justify-between text-xs py-1.5 px-2 rounded bg-bg/50"
+          >
             <div className="flex items-center gap-2 min-w-0">
               <SideBadge side={c.side} />
               <span className="truncate text-muted">{c.source}</span>
             </div>
-            <span className="text-muted tabular-nums shrink-0">{(c.confidence * 100).toFixed(0)}%</span>
+            <span className="text-muted tabular-nums shrink-0">
+              {(c.confidence * 100).toFixed(0)}%
+            </span>
           </div>
         ))}
       </div>
@@ -488,37 +562,64 @@ function RiskBox({ label, value, color }: { label: string; value: number; color:
   return (
     <div className="bg-bg/50 rounded-lg p-2.5 border border-border/50">
       <div className={`text-xs ${color} mb-1`}>{label}</div>
-      <div className="text-sm font-medium tabular-nums">{value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+      <div className="text-sm font-medium tabular-nums">
+        {value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+      </div>
     </div>
   );
 }
 
-function MLCard({ ml, loading, onRefresh }: { ml: MLPrediction | null; loading: boolean; onRefresh: () => void }) {
+function MLCard({
+  ml,
+  loading,
+  onRefresh,
+}: {
+  ml: MLPrediction | null;
+  loading: boolean;
+  onRefresh: () => void;
+}) {
   return (
     <div className="bg-surface border border-border rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold flex items-center gap-2">
           <Brain className="w-4 h-4 text-primary" /> ML Prediction
         </h3>
-        <button onClick={onRefresh} disabled={loading} className="p-1.5 rounded hover:bg-bg transition-colors disabled:opacity-40">
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+        <button
+          onClick={onRefresh}
+          disabled={loading}
+          className="p-1.5 rounded hover:bg-bg transition-colors disabled:opacity-40"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
-      {!ml && !loading && <div className="text-xs text-muted">Click refresh to run the ensemble model.</div>}
-      {loading && <div className="text-xs text-muted flex items-center gap-2"><RefreshCw className="w-3 h-3 animate-spin" /> Running ensemble…</div>}
+      {!ml && !loading && (
+        <div className="text-xs text-muted">Click refresh to run the ensemble model.</div>
+      )}
+      {loading && (
+        <div className="text-xs text-muted flex items-center gap-2">
+          <RefreshCw className="w-3 h-3 animate-spin" /> Running ensemble…
+        </div>
+      )}
       {ml && (
         <div className="space-y-2 animate-fade-in">
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted">Direction</span>
-            <SideBadge side={ml.prediction === 'up' ? 'buy' : ml.prediction === 'down' ? 'sell' : 'neutral'} />
+            <SideBadge
+              side={ml.prediction === "up" ? "buy" : ml.prediction === "down" ? "sell" : "neutral"}
+            />
           </div>
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted">Probability</span>
-            <span className="text-sm font-medium tabular-nums">{(ml.probability * 100).toFixed(1)}%</span>
+            <span className="text-sm font-medium tabular-nums">
+              {(ml.probability * 100).toFixed(1)}%
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted">Expected Move</span>
-            <span className="text-sm font-medium tabular-nums">{ml.expected_move_pct >= 0 ? '+' : ''}{ml.expected_move_pct.toFixed(2)}%</span>
+            <span className="text-sm font-medium tabular-nums">
+              {ml.expected_move_pct >= 0 ? "+" : ""}
+              {ml.expected_move_pct.toFixed(2)}%
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted">Confidence</span>
@@ -534,9 +635,9 @@ function MLCard({ ml, loading, onRefresh }: { ml: MLPrediction | null; loading: 
   );
 }
 
-function PatternsCard({ patterns }: { patterns: import('../lib/types').PatternHit[] }) {
-  const candle = patterns.filter((p) => p.kind === 'candlestick');
-  const chart = patterns.filter((p) => p.kind === 'chart');
+function PatternsCard({ patterns }: { patterns: import("../lib/types").PatternHit[] }) {
+  const candle = patterns.filter((p) => p.kind === "candlestick");
+  const chart = patterns.filter((p) => p.kind === "chart");
   return (
     <div className="bg-surface border border-border rounded-xl p-4">
       <h3 className="text-sm font-semibold mb-3">Pattern Recognition</h3>
@@ -548,7 +649,9 @@ function PatternsCard({ patterns }: { patterns: import('../lib/types').PatternHi
             <div key={i} className="flex items-center gap-2 py-1 text-xs">
               <SideBadge side={p.side} />
               <span className="font-medium">{p.name}</span>
-              <span className="text-muted ml-auto tabular-nums">{(p.confidence * 100).toFixed(0)}%</span>
+              <span className="text-muted ml-auto tabular-nums">
+                {(p.confidence * 100).toFixed(0)}%
+              </span>
             </div>
           ))}
         </div>
@@ -560,7 +663,9 @@ function PatternsCard({ patterns }: { patterns: import('../lib/types').PatternHi
             <div key={i} className="flex items-center gap-2 py-1 text-xs">
               <SideBadge side={p.side} />
               <span className="font-medium">{p.name}</span>
-              <span className="text-muted ml-auto tabular-nums">{(p.confidence * 100).toFixed(0)}%</span>
+              <span className="text-muted ml-auto tabular-nums">
+                {(p.confidence * 100).toFixed(0)}%
+              </span>
             </div>
           ))}
         </div>
@@ -569,24 +674,31 @@ function PatternsCard({ patterns }: { patterns: import('../lib/types').PatternHi
   );
 }
 
-function SignalsCard({ signals }: { signals: import('../lib/types').Signal[] }) {
-  const active = signals.filter((s) => s.side !== 'neutral');
+function SignalsCard({ signals }: { signals: import("../lib/types").Signal[] }) {
+  const active = signals.filter((s) => s.side !== "neutral");
   return (
     <div className="bg-surface border border-border rounded-xl p-4">
       <h3 className="text-sm font-semibold mb-3">Strategy Library</h3>
       <div className="space-y-1">
         {signals.map((s, i) => (
-          <div key={i} className={`flex items-center gap-2 py-1.5 text-xs ${s.side === 'neutral' ? 'opacity-50' : ''}`}>
+          <div
+            key={i}
+            className={`flex items-center gap-2 py-1.5 text-xs ${s.side === "neutral" ? "opacity-50" : ""}`}
+          >
             <SideBadge side={s.side} />
             <div className="min-w-0 flex-1">
               <div className="font-medium truncate">{s.strategy}</div>
               <div className="text-muted truncate">{s.reason}</div>
             </div>
-            <span className="text-muted tabular-nums shrink-0">{(s.confidence * 100).toFixed(0)}%</span>
+            <span className="text-muted tabular-nums shrink-0">
+              {(s.confidence * 100).toFixed(0)}%
+            </span>
           </div>
         ))}
       </div>
-      {active.length === 0 && <div className="text-xs text-muted mt-2">All strategies neutral.</div>}
+      {active.length === 0 && (
+        <div className="text-xs text-muted mt-2">All strategies neutral.</div>
+      )}
     </div>
   );
 }
@@ -601,7 +713,9 @@ function StructureCard({ decision }: { decision: DecisionResult }) {
       <div className="space-y-2 text-xs">
         <div className="flex justify-between">
           <span className="text-muted">Regime</span>
-          <span className={`font-medium ${REGIME_COLORS[decision.regime]}`}>{REGIME_LABELS[decision.regime]}</span>
+          <span className={`font-medium ${REGIME_COLORS[decision.regime]}`}>
+            {REGIME_LABELS[decision.regime]}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted">Selected Strategy</span>

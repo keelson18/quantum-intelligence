@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import type { AlertRow } from '../lib/types';
+import { create } from "zustand";
+import type { AlertRow } from "../lib/types";
 
 interface AlertState {
   alerts: AlertRow[];
@@ -14,8 +14,7 @@ interface AlertState {
 export const useAlertStore = create<AlertState>((set) => ({
   alerts: [],
   unreadCount: 0,
-  setAlerts: (alerts) =>
-    set({ alerts, unreadCount: alerts.filter((a) => !a.read).length }),
+  setAlerts: (alerts) => set({ alerts, unreadCount: alerts.filter((a) => !a.read).length }),
   addAlert: (alert) =>
     set((s) => ({
       alerts: [alert, ...s.alerts].slice(0, 100),

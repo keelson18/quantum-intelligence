@@ -4,7 +4,7 @@
 // result. No engine may fabricate output: missing evidence => degraded status.
 // ============================================================================
 
-export type EngineStatus = 'ok' | 'degraded' | 'insufficient_data' | 'failed';
+export type EngineStatus = "ok" | "degraded" | "insufficient_data" | "failed";
 
 export interface Evidence {
   key: string;
@@ -72,11 +72,11 @@ export function runEngine<T>(
       engine_name: name,
       engine_version: version,
       timestamp: new Date(started).toISOString(),
-      status: 'failed',
+      status: "failed",
       result: null,
       confidence: 0,
       evidence: [],
-      warnings: [err instanceof Error ? err.message : 'Unknown engine failure'],
+      warnings: [err instanceof Error ? err.message : "Unknown engine failure"],
       latency_ms: Date.now() - started,
       input_context_id: contextId,
     };

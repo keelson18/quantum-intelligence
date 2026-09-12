@@ -5,11 +5,11 @@
 // evidence that must survive out-of-sample testing before it is trusted.
 // ============================================================================
 
-import type { Candle, Timeframe } from '../types';
-import { runBacktest, DEFAULT_BACKTEST, type BacktestConfig } from '../backtest';
-import { evaluateStrategies } from '../strategies';
-import { runEngine, type EngineResult, type Evidence } from './contract';
-import { ENGINE_REGISTRY } from './registry';
+import type { Candle, Timeframe } from "../types";
+import { runBacktest, DEFAULT_BACKTEST, type BacktestConfig } from "../backtest";
+import { evaluateStrategies } from "../strategies";
+import { runEngine, type EngineResult, type Evidence } from "./contract";
+import { ENGINE_REGISTRY } from "./registry";
 
 const D = ENGINE_REGISTRY[18];
 
@@ -42,7 +42,7 @@ export function researchEngine(
   return runEngine<ResearchResult>(D.id, D.version, contextId, () => {
     if (candles.length < 200) {
       return {
-        status: 'insufficient_data',
+        status: "insufficient_data",
         result: null,
         confidence: 0,
         warnings: [`Only ${candles.length} candles — research requires at least 200`],
@@ -84,17 +84,19 @@ export function researchEngine(
     const evidence: Evidence[] = findings.map((f) => ({
       key: f.strategy,
       value: Number(f.outOfSampleWinRate.toFixed(3)),
-      note: `IS ${(f.inSampleWinRate * 100).toFixed(0)}% → OOS ${(f.outOfSampleWinRate * 100).toFixed(0)}% over ${f.trades} trades (${f.robust ? 'robust' : 'not robust'})`,
+      note: `IS ${(f.inSampleWinRate * 100).toFixed(0)}% → OOS ${(f.outOfSampleWinRate * 100).toFixed(0)}% over ${f.trades} trades (${f.robust ? "robust" : "not robust"})`,
     }));
 
     const robustCount = findings.filter((f) => f.robust).length;
 
     return {
-      status: findings.length === 0 ? 'insufficient_data' : 'ok',
+      status: findings.length === 0 ? "insufficient_data" : "ok",
       result: { findings, symbol, timeframe, drivesLiveDecisions: false },
       confidence: findings.length === 0 ? 0 : robustCount / findings.length,
       evidence,
-      warnings: ['Research findings must not be used as live signals until validated out-of-sample'],
+      warnings: [
+        "Research findings must not be used as live signals until validated out-of-sample",
+      ],
     };
   });
 }

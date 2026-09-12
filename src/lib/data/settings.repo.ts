@@ -1,5 +1,5 @@
 // Data-access tier: per-user application settings.
-import { supabase } from '../supabase';
+import { supabase } from "../supabase";
 
 export interface UserSettingsRecord {
   default_timeframe: string;
@@ -11,20 +11,27 @@ export interface UserSettingsRecord {
 }
 
 export async function getUserSettings(userId: string): Promise<UserSettingsRecord | null> {
-  const { data } = await supabase.from('user_settings').select('*').eq('user_id', userId).maybeSingle();
+  const { data } = await supabase
+    .from("user_settings")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
   return (data ?? null) as UserSettingsRecord | null;
 }
 
-export async function saveUserSettings(userId: string, settings: {
-  defaultTimeframe: string;
-  riskTolerance: string;
-  theme: string;
-  notifPriceAlerts: boolean;
-  notifAISignals: boolean;
-  notifRiskWarnings: boolean;
-  notifStrategyTriggers: boolean;
-}): Promise<void> {
-  await supabase.from('user_settings').upsert({
+export async function saveUserSettings(
+  userId: string,
+  settings: {
+    defaultTimeframe: string;
+    riskTolerance: string;
+    theme: string;
+    notifPriceAlerts: boolean;
+    notifAISignals: boolean;
+    notifRiskWarnings: boolean;
+    notifStrategyTriggers: boolean;
+  },
+): Promise<void> {
+  await supabase.from("user_settings").upsert({
     user_id: userId,
     default_timeframe: settings.defaultTimeframe,
     risk_tolerance: settings.riskTolerance,

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 import {
   createChart,
   ColorType,
@@ -8,13 +8,13 @@ import {
   type LineData,
   type SeriesMarker,
   type Time,
-} from 'lightweight-charts';
-import type { Candle, Overlay } from '../lib/types';
+} from "lightweight-charts";
+import type { Candle, Overlay } from "../lib/types";
 
 interface Props {
   candles: Candle[];
   overlays: Overlay[];
-  theme: 'light' | 'dark';
+  theme: "light" | "dark";
 }
 
 // Candlestick chart with live overlays: lines (MAs, Bollinger, trendlines),
@@ -22,34 +22,34 @@ interface Props {
 export default function PriceChart({ candles, overlays, theme }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   // Track created overlay series so we can clean them up on each render.
-  const overlaySeriesRef = useRef<ISeriesApi<'Line'>[]>([]);
+  const overlaySeriesRef = useRef<ISeriesApi<"Line">[]>([]);
 
   // Create chart once.
   useEffect(() => {
     if (!containerRef.current) return;
     const chart = createChart(containerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: theme === 'dark' ? '#000000' : '#ffffff' },
-        textColor: theme === 'dark' ? '#e5e5e5' : '#171717',
-        fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
+        background: { type: ColorType.Solid, color: theme === "dark" ? "#000000" : "#ffffff" },
+        textColor: theme === "dark" ? "#e5e5e5" : "#171717",
+        fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif",
       },
       grid: {
-        vertLines: { color: theme === 'dark' ? '#1a1a1a' : '#f0f0f0' },
-        horzLines: { color: theme === 'dark' ? '#1a1a1a' : '#f0f0f0' },
+        vertLines: { color: theme === "dark" ? "#1a1a1a" : "#f0f0f0" },
+        horzLines: { color: theme === "dark" ? "#1a1a1a" : "#f0f0f0" },
       },
       crosshair: { mode: CrosshairMode.Normal },
-      rightPriceScale: { borderColor: theme === 'dark' ? '#262626' : '#e5e5e5' },
-      timeScale: { borderColor: theme === 'dark' ? '#262626' : '#e5e5e5', timeVisible: true },
+      rightPriceScale: { borderColor: theme === "dark" ? "#262626" : "#e5e5e5" },
+      timeScale: { borderColor: theme === "dark" ? "#262626" : "#e5e5e5", timeVisible: true },
     });
     chartRef.current = chart;
     candleSeriesRef.current = chart.addCandlestickSeries({
-      upColor: '#22c55e',
-      downColor: '#ef4444',
+      upColor: "#22c55e",
+      downColor: "#ef4444",
       borderVisible: false,
-      wickUpColor: '#22c55e',
-      wickDownColor: '#ef4444',
+      wickUpColor: "#22c55e",
+      wickDownColor: "#ef4444",
     });
 
     const handleResize = () => {
@@ -57,10 +57,10 @@ export default function PriceChart({ candles, overlays, theme }: Props) {
         chartRef.current.applyOptions({ width: containerRef.current.clientWidth });
       }
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       chart.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
@@ -74,7 +74,10 @@ export default function PriceChart({ candles, overlays, theme }: Props) {
     candleSeriesRef.current.setData(
       candles.map((c) => ({
         time: c.time as Time,
-        open: c.open, high: c.high, low: c.low, close: c.close,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
       })),
     );
   }, [candles]);
@@ -86,16 +89,20 @@ export default function PriceChart({ candles, overlays, theme }: Props) {
 
     // Remove old overlay line series.
     for (const s of overlaySeriesRef.current) {
-      try { chart.removeSeries(s); } catch { /* noop */ }
+      try {
+        chart.removeSeries(s);
+      } catch {
+        /* noop */
+      }
     }
     overlaySeriesRef.current = [];
 
     const allMarkers: SeriesMarker<Time>[] = [];
 
     for (const ov of overlays) {
-      if (ov.type === 'line' && ov.points && ov.points.length > 1) {
+      if (ov.type === "line" && ov.points && ov.points.length > 1) {
         const line = chart.addLineSeries({
-          color: ov.color ?? '#6b7280',
+          color: ov.color ?? "#6b7280",
           lineWidth: 1,
           priceLineVisible: false,
           lastValueVisible: false,
@@ -105,9 +112,9 @@ export default function PriceChart({ candles, overlays, theme }: Props) {
           .map((p) => ({ time: p.time as Time, value: p.value }));
         line.setData(data);
         overlaySeriesRef.current.push(line);
-      } else if (ov.type === 'hline' && ov.price != null) {
+      } else if (ov.type === "hline" && ov.price != null) {
         const line = chart.addLineSeries({
-          color: ov.color ?? '#9ca3af',
+          color: ov.color ?? "#9ca3af",
           lineWidth: 1,
           lineStyle: 2, // dashed
           priceLineVisible: false,
@@ -124,7 +131,7 @@ export default function PriceChart({ candles, overlays, theme }: Props) {
           ]);
         }
         overlaySeriesRef.current.push(line);
-      } else if (ov.type === 'markers' && ov.markers) {
+      } else if (ov.type === "markers" && ov.markers) {
         for (const m of ov.markers) {
           allMarkers.push({
             time: m.time as Time,
@@ -144,7 +151,11 @@ export default function PriceChart({ candles, overlays, theme }: Props) {
 
     return () => {
       for (const s of overlaySeriesRef.current) {
-        try { chart.removeSeries(s); } catch { /* noop */ }
+        try {
+          chart.removeSeries(s);
+        } catch {
+          /* noop */
+        }
       }
       overlaySeriesRef.current = [];
     };

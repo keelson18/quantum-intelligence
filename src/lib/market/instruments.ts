@@ -5,8 +5,8 @@
 // id is `BASE/QUOTE`. Adapters map canonical -> provider symbol.
 // ============================================================================
 
-import { ALL_INSTRUMENTS } from '../types';
-import type { Instrument } from '../types';
+import { ALL_INSTRUMENTS } from "../types";
+import type { Instrument } from "../types";
 
 /** Canonical id for an instrument, e.g. "BTC/USDT". */
 export function canonicalId(instrument: Instrument): string {
@@ -29,6 +29,6 @@ export function toCanonical(idOrSymbol: string): string {
 
 /** Split a canonical id into base/quote without a registry lookup. */
 export function splitCanonical(canonical: string): { base: string; quote: string } {
-  const [base = canonical, quote = ''] = canonical.toUpperCase().split('/');
+  const [base = canonical, quote = ""] = canonical.toUpperCase().split("/");
   return { base, quote };
 }

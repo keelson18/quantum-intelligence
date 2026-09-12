@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from "react";
 
 interface SidebarState {
   collapsed: boolean;
@@ -20,6 +20,6 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
 
 export function useSidebar(): SidebarState {
   const ctx = useContext(SidebarContext);
-  if (!ctx) throw new Error('useSidebar must be used within SidebarProvider');
+  if (!ctx) throw new Error("useSidebar must be used within SidebarProvider");
   return ctx;
 }

@@ -1,5 +1,5 @@
-import type { MasterDecision } from './engines/masterDecision';
-import { persistAnalysisRun } from './intelligence.functions';
+import type { MasterDecision } from "./engines/masterDecision";
+import { persistAnalysisRun } from "./intelligence.functions";
 
 const persisted = new Set<string>();
 
@@ -35,15 +35,22 @@ export async function recordMasterDecision(md: MasterDecision): Promise<void> {
         dataQualityScore: md.engines.dataQuality.result?.score ?? 0,
         reasons: md.reasons.slice(0, 50),
         engineVersions: md.engineVersions,
-        riskViolations: (md.engines.riskGate?.result?.violations ?? []) as unknown as Record<string, unknown>[],
-        contradictions: (md.engines.contradictions?.result?.contradictions ?? []) as unknown as Record<string, unknown>[],
-        explanation: (md.analysis?.recommendation.explanation ?? null) as Record<string, unknown> | null,
+        riskViolations: (md.engines.riskGate?.result?.violations ?? []) as unknown as Record<
+          string,
+          unknown
+        >[],
+        contradictions: (md.engines.contradictions?.result?.contradictions ??
+          []) as unknown as Record<string, unknown>[],
+        explanation: (md.analysis?.recommendation.explanation ?? null) as Record<
+          string,
+          unknown
+        > | null,
         engines,
         qualityIssues: md.engines.dataQuality.result?.issues ?? [],
       },
     });
   } catch (err) {
     persisted.delete(key);
-    console.warn('Failed to persist analysis run', err);
+    console.warn("Failed to persist analysis run", err);
   }
 }

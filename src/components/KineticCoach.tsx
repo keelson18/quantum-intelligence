@@ -1,32 +1,42 @@
-import { useEffect, useRef, useState } from 'react';
-import { MessageSquare, Send, Loader2 } from 'lucide-react';
-import { askCoach, type CoachMessage } from '../lib/mlClient';
+import { useEffect, useRef, useState } from "react";
+import { MessageSquare, Send, Loader2 } from "lucide-react";
+import { askCoach, type CoachMessage } from "../lib/mlClient";
 
 // Kinetic Coach — Gemini-powered trading coaching chat.
 export default function KineticCoach() {
   const [messages, setMessages] = useState<CoachMessage[]>([
-    { role: 'assistant', content: "Hi, I'm Kinetic Coach. Ask me about any signal you're seeing, risk management, or trading psychology." },
+    {
+      role: "assistant",
+      content:
+        "Hi, I'm Kinetic Coach. Ask me about any signal you're seeing, risk management, or trading psychology.",
+    },
   ]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
   const send = async () => {
     const text = input.trim();
     if (!text || loading) return;
-    const next = [...messages, { role: 'user' as const, content: text }];
+    const next = [...messages, { role: "user" as const, content: text }];
     setMessages(next);
-    setInput('');
+    setInput("");
     setLoading(true);
     try {
       const reply = await askCoach(next);
-      setMessages((m) => [...m, { role: 'assistant', content: reply }]);
+      setMessages((m) => [...m, { role: "assistant", content: reply }]);
     } catch {
-      setMessages((m) => [...m, { role: 'assistant', content: 'Sorry, I had trouble reaching the coaching service. Please try again.' }]);
+      setMessages((m) => [
+        ...m,
+        {
+          role: "assistant",
+          content: "Sorry, I had trouble reaching the coaching service. Please try again.",
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -40,12 +50,14 @@ export default function KineticCoach() {
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] px-3 py-2 rounded-lg text-sm leading-relaxed ${
-              m.role === 'user'
-                ? 'bg-primary text-black'
-                : 'bg-surface border border-border text-text'
-            }`}>
+          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div
+              className={`max-w-[85%] px-3 py-2 rounded-lg text-sm leading-relaxed ${
+                m.role === "user"
+                  ? "bg-primary text-black"
+                  : "bg-surface border border-border text-text"
+              }`}
+            >
               {m.content}
             </div>
           </div>
@@ -63,7 +75,7 @@ export default function KineticCoach() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && send()}
+            onKeyDown={(e) => e.key === "Enter" && send()}
             placeholder="Ask about a signal, risk, or strategy…"
             className="flex-1 px-3 py-2 rounded-lg bg-surface border border-border text-text placeholder:text-muted/60 focus:outline-none focus:border-primary text-sm"
           />

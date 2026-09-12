@@ -1,9 +1,17 @@
-import type { ReactNode } from 'react';
-import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 
 // PageHeader — consistent page title + description for every route.
-export default function PageHeader({ icon: Icon, title, subtitle, children }: {
-  icon: LucideIcon; title: string; subtitle?: string; children?: ReactNode;
+export default function PageHeader({
+  icon: Icon,
+  title,
+  subtitle,
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  subtitle?: string;
+  children?: ReactNode;
 }) {
   return (
     <div className="px-4 lg:px-6 py-4">
