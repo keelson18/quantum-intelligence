@@ -5,10 +5,10 @@
 // Small or biased samples must NOT be presented as strong evidence.
 // ============================================================================
 
-import type { Candle } from '../types';
-import { atr, adx as adxSeries, rsi as rsiSeries } from '../indicators';
-import { runEngine, type EngineResult, type Evidence } from './contract';
-import { ENGINE_REGISTRY } from './registry';
+import type { Candle } from "../types";
+import { atr, adx as adxSeries, rsi as rsiSeries } from "../indicators";
+import { runEngine, type EngineResult, type Evidence } from "./contract";
+import { ENGINE_REGISTRY } from "./registry";
 
 const D = ENGINE_REGISTRY[8];
 
@@ -20,13 +20,13 @@ export interface SimilarCase {
   time: number;
   similarity: number; // 0..1
   forwardReturnPct: number;
-  outcome: 'up' | 'down' | 'flat';
+  outcome: "up" | "down" | "flat";
 }
 
 export interface SimilarityResult {
   cases: SimilarCase[];
   sampleSize: number;
-  sampleQuality: 'strong' | 'moderate' | 'weak' | 'insufficient';
+  sampleQuality: "strong" | "moderate" | "weak" | "insufficient";
   upRate: number;
   downRate: number;
   avgForwardReturnPct: number;
@@ -65,15 +65,18 @@ function distance(a: number[], b: number[]): number {
   return Math.sqrt(s);
 }
 
-export function historicalSimilarityEngine(contextId: string, candles: Candle[]): EngineResult<SimilarityResult> {
+export function historicalSimilarityEngine(
+  contextId: string,
+  candles: Candle[],
+): EngineResult<SimilarityResult> {
   return runEngine<SimilarityResult>(D.id, D.version, contextId, () => {
     const current = featureVector(candles, candles.length - 1);
     if (!current || candles.length < 150) {
       return {
-        status: 'insufficient_data',
+        status: "insufficient_data",
         result: null,
         confidence: 0,
-        warnings: ['Not enough history to build a historical similarity sample'],
+        warnings: ["Not enough history to build a historical similarity sample"],
       };
     }
 
@@ -91,17 +94,23 @@ export function historicalSimilarityEngine(contextId: string, candles: Candle[])
         time: candles[i].time,
         similarity: 1 / (1 + d),
         forwardReturnPct: fwd,
-        outcome: fwd > 0.2 ? 'up' : fwd < -0.2 ? 'down' : 'flat',
+        outcome: fwd > 0.2 ? "up" : fwd < -0.2 ? "down" : "flat",
       });
     }
 
     const cases = scored.sort((a, b) => b.similarity - a.similarity).slice(0, 25);
     const sampleSize = cases.length;
-    const sampleQuality: SimilarityResult['sampleQuality'] =
-      sampleSize >= 20 ? 'strong' : sampleSize >= 12 ? 'moderate' : sampleSize >= 5 ? 'weak' : 'insufficient';
+    const sampleQuality: SimilarityResult["sampleQuality"] =
+      sampleSize >= 20
+        ? "strong"
+        : sampleSize >= 12
+          ? "moderate"
+          : sampleSize >= 5
+            ? "weak"
+            : "insufficient";
 
-    const ups = cases.filter((c) => c.outcome === 'up').length;
-    const downs = cases.filter((c) => c.outcome === 'down').length;
+    const ups = cases.filter((c) => c.outcome === "up").length;
+    const downs = cases.filter((c) => c.outcome === "down").length;
     const returns = cases.map((c) => c.forwardReturnPct).sort((a, b) => a - b);
     const avg = returns.length ? returns.reduce((a, b) => a + b, 0) / returns.length : 0;
     const median = returns.length ? returns[Math.floor(returns.length / 2)] : 0;
@@ -109,23 +118,48 @@ export function historicalSimilarityEngine(contextId: string, candles: Candle[])
     const downRate = sampleSize ? downs / sampleSize : 0;
 
     const edge = Math.abs(upRate - downRate);
-    const qualityFactor = sampleQuality === 'strong' ? 1 : sampleQuality === 'moderate' ? 0.6 : sampleQuality === 'weak' ? 0.3 : 0;
+    const qualityFactor =
+      sampleQuality === "strong"
+        ? 1
+        : sampleQuality === "moderate"
+          ? 0.6
+          : sampleQuality === "weak"
+            ? 0.3
+            : 0;
 
     const evidence: Evidence[] = [
-      { key: 'sample_size', value: sampleSize, note: `quality ${sampleQuality}` },
-      { key: 'up_rate', value: Number(upRate.toFixed(3)) },
-      { key: 'down_rate', value: Number(downRate.toFixed(3)) },
-      { key: 'avg_forward_return_pct', value: Number(avg.toFixed(3)), note: `${HORIZON} bars ahead` },
-      { key: 'median_forward_return_pct', value: Number(median.toFixed(3)) },
-      { key: 'top_similarity', value: Number((cases[0]?.similarity ?? 0).toFixed(3)) },
+      { key: "sample_size", value: sampleSize, note: `quality ${sampleQuality}` },
+      { key: "up_rate", value: Number(upRate.toFixed(3)) },
+      { key: "down_rate", value: Number(downRate.toFixed(3)) },
+      {
+        key: "avg_forward_return_pct",
+        value: Number(avg.toFixed(3)),
+        note: `${HORIZON} bars ahead`,
+      },
+      { key: "median_forward_return_pct", value: Number(median.toFixed(3)) },
+      { key: "top_similarity", value: Number((cases[0]?.similarity ?? 0).toFixed(3)) },
     ];
 
     const warnings: string[] = [];
-    if (sampleQuality === 'weak' || sampleQuality === 'insufficient') warnings.push('Sample is small — historical evidence must not be treated as strong');
+    if (sampleQuality === "weak" || sampleQuality === "insufficient")
+      warnings.push("Sample is small — historical evidence must not be treated as strong");
 
     return {
-      status: sampleQuality === 'insufficient' ? 'insufficient_data' : sampleQuality === 'weak' ? 'degraded' : 'ok',
-      result: { cases, sampleSize, sampleQuality, upRate, downRate, avgForwardReturnPct: avg, medianForwardReturnPct: median },
+      status:
+        sampleQuality === "insufficient"
+          ? "insufficient_data"
+          : sampleQuality === "weak"
+            ? "degraded"
+            : "ok",
+      result: {
+        cases,
+        sampleSize,
+        sampleQuality,
+        upRate,
+        downRate,
+        avgForwardReturnPct: avg,
+        medianForwardReturnPct: median,
+      },
       confidence: edge * qualityFactor,
       evidence,
       warnings,

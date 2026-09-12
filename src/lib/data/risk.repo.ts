@@ -1,5 +1,5 @@
 // Data-access tier: persisted risk state.
-import { supabase } from '../supabase';
+import { supabase } from "../supabase";
 
 export interface RiskStateRecord {
   equity: number;
@@ -13,19 +13,26 @@ export interface RiskStateRecord {
 }
 
 export async function getRiskState(userId: string): Promise<RiskStateRecord | null> {
-  const { data } = await supabase.from('risk_state').select('*').eq('user_id', userId).maybeSingle();
+  const { data } = await supabase
+    .from("risk_state")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
   return (data ?? null) as RiskStateRecord | null;
 }
 
-export async function saveRiskState(userId: string, state: {
-  equity: number;
-  startingEquity: number;
-  maxDailyLossPct: number;
-  maxDrawdownPct: number;
-  maxExposurePct: number;
-  peakEquity: number;
-}): Promise<void> {
-  await supabase.from('risk_state').upsert({
+export async function saveRiskState(
+  userId: string,
+  state: {
+    equity: number;
+    startingEquity: number;
+    maxDailyLossPct: number;
+    maxDrawdownPct: number;
+    maxExposurePct: number;
+    peakEquity: number;
+  },
+): Promise<void> {
+  await supabase.from("risk_state").upsert({
     user_id: userId,
     equity: state.equity,
     starting_equity: state.startingEquity,

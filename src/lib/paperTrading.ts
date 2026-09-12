@@ -4,21 +4,21 @@
 // (data access). No direct database calls and no real-money execution ever.
 // ============================================================================
 
-import { APP_CONFIG } from '../config/env';
+import { APP_CONFIG } from "../config/env";
 import {
   simulateFill,
   simulateExitFill,
   realisedPnL,
   type ExecutionAssumptions,
-} from './execution/simulation';
-import * as repo from './data/paper.repo';
-import { tradeReviewEngine, type ClosedTradeInput } from './engines/tradeReview';
-import { ENGINE_REGISTRY } from './engines/registry';
+} from "./execution/simulation";
+import * as repo from "./data/paper.repo";
+import { tradeReviewEngine, type ClosedTradeInput } from "./engines/tradeReview";
+import { ENGINE_REGISTRY } from "./engines/registry";
 
-export type OrderType = 'market' | 'limit' | 'stop';
-export type PositionSide = 'long' | 'short';
-export type PositionStatus = 'open' | 'closed' | 'pending';
-export type ExitReason = 'manual' | 'stop_loss' | 'take_profit' | 'trailing';
+export type OrderType = "market" | "limit" | "stop";
+export type PositionSide = "long" | "short";
+export type PositionStatus = "open" | "closed" | "pending";
+export type ExitReason = "manual" | "stop_loss" | "take_profit" | "trailing";
 
 export interface PaperPosition {
   id: string;
@@ -92,20 +92,23 @@ export function executionAssumptions(): ExecutionAssumptions {
 
 // ---- Position P&L calculation (unrealised, gross of exit fees) ----
 export function computeUnrealizedPnL(
-  pos: Pick<PaperPosition, 'side' | 'quantity' | 'entry_price'>,
+  pos: Pick<PaperPosition, "side" | "quantity" | "entry_price">,
   currentPrice: number,
 ): { pnl: number; pnlPct: number } {
-  const dir = pos.side === 'long' ? 1 : -1;
+  const dir = pos.side === "long" ? 1 : -1;
   const pnl = (currentPrice - pos.entry_price) * dir * pos.quantity;
   const cost = pos.entry_price * pos.quantity;
   return { pnl, pnlPct: cost > 0 ? pnl / cost : 0 };
 }
 
 // ---- Open a new paper position ----
-export async function openPosition(input: OpenOrderInput, currentPrice: number): Promise<PaperPosition | null> {
-  const isMarket = input.order_type === 'market';
+export async function openPosition(
+  input: OpenOrderInput,
+  currentPrice: number,
+): Promise<PaperPosition | null> {
+  const isMarket = input.order_type === "market";
   const requested = isMarket ? currentPrice : (input.limit_price ?? currentPrice);
-  const status: PositionStatus = isMarket ? 'open' : 'pending';
+  const status: PositionStatus = isMarket ? "open" : "pending";
 
   const fill = simulateFill(
     {
@@ -143,7 +146,7 @@ export async function openPosition(input: OpenOrderInput, currentPrice: number):
 
   await repo.recordExecutionEvent({
     position_id: position.id,
-    event_type: isMarket ? 'order_filled' : 'order_submitted',
+    event_type: isMarket ? "order_filled" : "order_submitted",
     symbol: input.symbol,
     side: input.side,
     quantity: input.quantity,
@@ -162,14 +165,14 @@ export async function openPosition(input: OpenOrderInput, currentPrice: number):
 export async function closePosition(
   positionId: string,
   currentPrice: number,
-  exitReason: ExitReason = 'manual',
+  exitReason: ExitReason = "manual",
 ): Promise<PaperTrade | null> {
   const pos = await repo.getPosition<PaperPosition>(positionId);
   if (!pos) return null;
 
   const assumptions = executionAssumptions();
   const exitFill = simulateExitFill(
-    { side: pos.side, quantity: pos.quantity, requestedPrice: currentPrice, orderType: 'market' },
+    { side: pos.side, quantity: pos.quantity, requestedPrice: currentPrice, orderType: "market" },
     assumptions,
   );
 
@@ -209,7 +212,7 @@ export async function closePosition(
   if (!trade) return null;
 
   await repo.updatePosition(positionId, {
-    status: 'closed',
+    status: "closed",
     close_price: exitFill.fillPrice,
     closed_at: exitTime,
     pnl: netPnl,
@@ -220,7 +223,7 @@ export async function closePosition(
   await repo.recordExecutionEvent({
     position_id: positionId,
     trade_id: trade.id,
-    event_type: 'position_closed',
+    event_type: "position_closed",
     symbol: pos.symbol,
     side: pos.side,
     quantity: pos.quantity,
@@ -239,7 +242,10 @@ export async function closePosition(
 }
 
 /** Runs Engine 17 on a single closed trade and persists the structured review. */
-export async function reviewClosedTrade(trade: PaperTrade, pos?: PaperPosition | null): Promise<void> {
+export async function reviewClosedTrade(
+  trade: PaperTrade,
+  pos?: PaperPosition | null,
+): Promise<void> {
   const input: ClosedTradeInput = {
     id: trade.id,
     symbol: trade.symbol,
@@ -281,19 +287,20 @@ export async function updateTrailingStop(
   trailingPct: number,
   side: PositionSide,
 ): Promise<boolean> {
-  const newStop = side === 'long'
-    ? currentPrice * (1 - trailingPct / 100)
-    : currentPrice * (1 + trailingPct / 100);
+  const newStop =
+    side === "long"
+      ? currentPrice * (1 - trailingPct / 100)
+      : currentPrice * (1 + trailingPct / 100);
 
-  const ok = await repo.updatePosition(positionId, { stop_loss: newStop }, 'open');
+  const ok = await repo.updatePosition(positionId, { stop_loss: newStop }, "open");
   if (ok) {
     await repo.recordExecutionEvent({
       position_id: positionId,
-      event_type: 'stop_updated',
-      symbol: '',
+      event_type: "stop_updated",
+      symbol: "",
       side,
       requested_price: currentPrice,
-      reason: 'trailing',
+      reason: "trailing",
       metadata: { new_stop: newStop, trailing_pct: trailingPct },
     });
   }
@@ -305,16 +312,20 @@ export function checkStopConditions(
   pos: PaperPosition,
   currentPrice: number,
 ): { shouldClose: boolean; reason: ExitReason } {
-  if (pos.status !== 'open') return { shouldClose: false, reason: 'manual' };
+  if (pos.status !== "open") return { shouldClose: false, reason: "manual" };
 
-  if (pos.side === 'long') {
-    if (pos.stop_loss && currentPrice <= pos.stop_loss) return { shouldClose: true, reason: 'stop_loss' };
-    if (pos.take_profit && currentPrice >= pos.take_profit) return { shouldClose: true, reason: 'take_profit' };
+  if (pos.side === "long") {
+    if (pos.stop_loss && currentPrice <= pos.stop_loss)
+      return { shouldClose: true, reason: "stop_loss" };
+    if (pos.take_profit && currentPrice >= pos.take_profit)
+      return { shouldClose: true, reason: "take_profit" };
   } else {
-    if (pos.stop_loss && currentPrice >= pos.stop_loss) return { shouldClose: true, reason: 'stop_loss' };
-    if (pos.take_profit && currentPrice <= pos.take_profit) return { shouldClose: true, reason: 'take_profit' };
+    if (pos.stop_loss && currentPrice >= pos.stop_loss)
+      return { shouldClose: true, reason: "stop_loss" };
+    if (pos.take_profit && currentPrice <= pos.take_profit)
+      return { shouldClose: true, reason: "take_profit" };
   }
-  return { shouldClose: false, reason: 'manual' };
+  return { shouldClose: false, reason: "manual" };
 }
 
 // ---- Check pending limit/stop orders for fill conditions ----
@@ -322,14 +333,18 @@ export function checkPendingOrder(
   pos: PaperPosition,
   currentPrice: number,
 ): { shouldFill: boolean; fillPrice: number } {
-  if (pos.status !== 'pending' || !pos.limit_price) return { shouldFill: false, fillPrice: 0 };
+  if (pos.status !== "pending" || !pos.limit_price) return { shouldFill: false, fillPrice: 0 };
 
-  if (pos.order_type === 'limit') {
-    if (pos.side === 'long' && currentPrice <= pos.limit_price) return { shouldFill: true, fillPrice: pos.limit_price };
-    if (pos.side === 'short' && currentPrice >= pos.limit_price) return { shouldFill: true, fillPrice: pos.limit_price };
-  } else if (pos.order_type === 'stop') {
-    if (pos.side === 'long' && currentPrice >= pos.limit_price) return { shouldFill: true, fillPrice: currentPrice };
-    if (pos.side === 'short' && currentPrice <= pos.limit_price) return { shouldFill: true, fillPrice: currentPrice };
+  if (pos.order_type === "limit") {
+    if (pos.side === "long" && currentPrice <= pos.limit_price)
+      return { shouldFill: true, fillPrice: pos.limit_price };
+    if (pos.side === "short" && currentPrice >= pos.limit_price)
+      return { shouldFill: true, fillPrice: pos.limit_price };
+  } else if (pos.order_type === "stop") {
+    if (pos.side === "long" && currentPrice >= pos.limit_price)
+      return { shouldFill: true, fillPrice: currentPrice };
+    if (pos.side === "short" && currentPrice <= pos.limit_price)
+      return { shouldFill: true, fillPrice: currentPrice };
   }
   return { shouldFill: false, fillPrice: 0 };
 }
@@ -352,20 +367,20 @@ export async function fillPendingOrder(positionId: string, fillPrice: number): P
   const ok = await repo.updatePosition(
     positionId,
     {
-      status: 'open',
+      status: "open",
       entry_price: fill.fillPrice,
       requested_price: fillPrice,
       fees: fill.fees,
       slippage: Math.abs(fill.slippage),
       opened_at: new Date().toISOString(),
     },
-    'pending',
+    "pending",
   );
 
   if (ok) {
     await repo.recordExecutionEvent({
       position_id: positionId,
-      event_type: 'order_filled',
+      event_type: "order_filled",
       symbol: pos.symbol,
       side: pos.side,
       quantity: pos.quantity,
@@ -386,12 +401,12 @@ export async function cancelPendingOrder(positionId: string): Promise<boolean> {
   if (ok && pos) {
     await repo.recordExecutionEvent({
       position_id: positionId,
-      event_type: 'order_cancelled',
+      event_type: "order_cancelled",
       symbol: pos.symbol,
       side: pos.side,
       quantity: pos.quantity,
       requested_price: pos.limit_price,
-      reason: 'cancelled_by_user',
+      reason: "cancelled_by_user",
     });
   }
   return ok;
@@ -399,11 +414,11 @@ export async function cancelPendingOrder(positionId: string): Promise<boolean> {
 
 // ---- Reads ----
 export function fetchOpenPositions(): Promise<PaperPosition[]> {
-  return repo.listPositionsByStatus<PaperPosition>('open', 'opened_at');
+  return repo.listPositionsByStatus<PaperPosition>("open", "opened_at");
 }
 
 export function fetchPendingOrders(): Promise<PaperPosition[]> {
-  return repo.listPositionsByStatus<PaperPosition>('pending', 'created_at');
+  return repo.listPositionsByStatus<PaperPosition>("pending", "created_at");
 }
 
 export function fetchTradeHistory(limit = 100): Promise<PaperTrade[]> {

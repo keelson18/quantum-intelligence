@@ -6,9 +6,9 @@
 // (e.g. "BTC/USDT") into their own symbols and return canonical candles.
 // ============================================================================
 
-import type { Candle, Timeframe } from '../types';
+import type { Candle, Timeframe } from "../types";
 
-export type FeedStatus = 'connecting' | 'open' | 'closed' | 'reconnecting';
+export type FeedStatus = "connecting" | "open" | "closed" | "reconnecting";
 
 export interface OrderBookEntry {
   price: number;

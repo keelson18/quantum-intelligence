@@ -1,8 +1,8 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { Timeframe } from '../lib/types';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { Timeframe } from "../lib/types";
 
-export type RiskTolerance = 'conservative' | 'moderate' | 'aggressive';
+export type RiskTolerance = "conservative" | "moderate" | "aggressive";
 
 interface SettingsState {
   defaultTimeframe: Timeframe;
@@ -21,8 +21,8 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      defaultTimeframe: '1h',
-      riskTolerance: 'moderate',
+      defaultTimeframe: "1h",
+      riskTolerance: "moderate",
       notifPriceAlerts: true,
       notifAISignals: true,
       notifRiskWarnings: true,
@@ -33,6 +33,6 @@ export const useSettingsStore = create<SettingsState>()(
       setSetting: (key, value) => set({ [key]: value } as Partial<SettingsState>),
       bulkSet: (partial) => set(partial),
     }),
-    { name: 'qi-settings' },
+    { name: "qi-settings" },
   ),
 );

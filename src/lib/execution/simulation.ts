@@ -29,18 +29,18 @@ export interface SimulatedFill {
  */
 export function simulateFill(
   params: {
-    side: 'long' | 'short';
+    side: "long" | "short";
     quantity: number;
     requestedPrice: number;
-    orderType: 'market' | 'limit' | 'stop';
+    orderType: "market" | "limit" | "stop";
     /** Entry fills pay slippage against the trader; exits do too. */
     crossesSpread?: boolean;
   },
   assumptions: ExecutionAssumptions,
 ): SimulatedFill {
   const { side, quantity, requestedPrice, orderType } = params;
-  const crosses = params.crossesSpread ?? orderType !== 'limit';
-  const dir = side === 'long' ? 1 : -1;
+  const crosses = params.crossesSpread ?? orderType !== "limit";
+  const dir = side === "long" ? 1 : -1;
   const slipPerUnit = crosses ? requestedPrice * assumptions.slippageRate : 0;
   const fillPrice = requestedPrice + dir * slipPerUnit;
   const fees = Math.abs(fillPrice * quantity) * assumptions.feeRate;
@@ -55,25 +55,28 @@ export function simulateFill(
 
 /** Exit fills move against the position, so the direction inverts. */
 export function simulateExitFill(
-  params: { side: 'long' | 'short'; quantity: number; requestedPrice: number; orderType: 'market' | 'limit' | 'stop' },
+  params: {
+    side: "long" | "short";
+    quantity: number;
+    requestedPrice: number;
+    orderType: "market" | "limit" | "stop";
+  },
   assumptions: ExecutionAssumptions,
 ): SimulatedFill {
-  const inverse = params.side === 'long' ? 'short' : 'long';
+  const inverse = params.side === "long" ? "short" : "long";
   return simulateFill({ ...params, side: inverse }, assumptions);
 }
 
 /** Realised P&L net of both legs' fees. */
-export function realisedPnL(
-  params: {
-    side: 'long' | 'short';
-    quantity: number;
-    entryPrice: number;
-    exitPrice: number;
-    entryFees: number;
-    exitFees: number;
-  },
-): { grossPnl: number; netPnl: number; netPnlPct: number } {
-  const dir = params.side === 'long' ? 1 : -1;
+export function realisedPnL(params: {
+  side: "long" | "short";
+  quantity: number;
+  entryPrice: number;
+  exitPrice: number;
+  entryFees: number;
+  exitFees: number;
+}): { grossPnl: number; netPnl: number; netPnlPct: number } {
+  const dir = params.side === "long" ? 1 : -1;
   const grossPnl = (params.exitPrice - params.entryPrice) * dir * params.quantity;
   const netPnl = grossPnl - params.entryFees - params.exitFees;
   const cost = Math.abs(params.entryPrice * params.quantity);

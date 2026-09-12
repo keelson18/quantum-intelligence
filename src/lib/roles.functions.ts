@@ -15,15 +15,23 @@ export const claimDefaultRole = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as unknown as {
       from(table: string): {
-        select(cols: string): { eq(col: string, val: string): { limit(n: number): Promise<{ data: unknown[] | null }> } };
+        select(cols: string): {
+          eq(col: string, val: string): { limit(n: number): Promise<{ data: unknown[] | null }> };
+        };
         insert(rows: Record<string, unknown>[]): Promise<{ error: { message: string } | null }>;
       };
     };
 
-    const { data: existing } = await db.from("user_roles").select("id").eq("user_id", context.userId).limit(1);
+    const { data: existing } = await db
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", context.userId)
+      .limit(1);
     if (existing && existing.length > 0) return { role: null };
 
-    const { error } = await db.from("user_roles").insert([{ user_id: context.userId, role: DEFAULT_ROLE }]);
+    const { error } = await db
+      .from("user_roles")
+      .insert([{ user_id: context.userId, role: DEFAULT_ROLE }]);
     if (error) {
       console.error("[roles] default role assignment failed", error.message);
       return { error: "Could not assign default role" as const };

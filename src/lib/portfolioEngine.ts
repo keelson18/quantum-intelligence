@@ -1,5 +1,5 @@
-import type { PaperPosition, PaperTrade } from './paperTrading';
-import { computeUnrealizedPnL } from './paperTrading';
+import type { PaperPosition, PaperTrade } from "./paperTrading";
+import { computeUnrealizedPnL } from "./paperTrading";
 
 // ============================================================================
 // Portfolio Analytics Engine
@@ -48,25 +48,42 @@ export function computePortfolioMetrics(
 ): PortfolioMetrics {
   if (trades.length === 0) {
     return {
-      totalReturn: 0, totalReturnPct: 0, winRate: 0, profitFactor: 0,
-      sharpe: 0, sortino: 0, maxDrawdown: 0, avgWin: 0, avgLoss: 0,
-      expectancy: 0, totalTrades: 0, wins: 0, losses: 0,
-      bestTrade: 0, worstTrade: 0, avgHoldHours: 0,
+      totalReturn: 0,
+      totalReturnPct: 0,
+      winRate: 0,
+      profitFactor: 0,
+      sharpe: 0,
+      sortino: 0,
+      maxDrawdown: 0,
+      avgWin: 0,
+      avgLoss: 0,
+      expectancy: 0,
+      totalTrades: 0,
+      wins: 0,
+      losses: 0,
+      bestTrade: 0,
+      worstTrade: 0,
+      avgHoldHours: 0,
       equityCurve: [{ time: new Date().toISOString(), equity: startingEquity }],
-      dailyPnl: [], weeklyPnl: [], monthlyPnl: [],
+      dailyPnl: [],
+      weeklyPnl: [],
+      monthlyPnl: [],
     };
   }
 
-  const sorted = [...trades].sort((a, b) => new Date(a.exit_time).getTime() - new Date(b.exit_time).getTime());
+  const sorted = [...trades].sort(
+    (a, b) => new Date(a.exit_time).getTime() - new Date(b.exit_time).getTime(),
+  );
 
   let equity = startingEquity;
-  const equityCurve: { time: string; equity: number }[] = [
-    { time: sorted[0].entry_time, equity },
-  ];
+  const equityCurve: { time: string; equity: number }[] = [{ time: sorted[0].entry_time, equity }];
 
-  let wins = 0, losses = 0;
-  let grossWin = 0, grossLoss = 0;
-  let bestTrade = -Infinity, worstTrade = Infinity;
+  let wins = 0,
+    losses = 0;
+  let grossWin = 0,
+    grossLoss = 0;
+  let bestTrade = -Infinity,
+    worstTrade = Infinity;
   let totalHoldHours = 0;
 
   const returns: number[] = [];
@@ -76,8 +93,13 @@ export function computePortfolioMetrics(
     equityCurve.push({ time: t.exit_time, equity });
     returns.push(t.pnl_pct);
 
-    if (t.pnl > 0) { wins++; grossWin += t.pnl; }
-    else { losses++; grossLoss += Math.abs(t.pnl); }
+    if (t.pnl > 0) {
+      wins++;
+      grossWin += t.pnl;
+    } else {
+      losses++;
+      grossLoss += Math.abs(t.pnl);
+    }
 
     bestTrade = Math.max(bestTrade, t.pnl);
     worstTrade = Math.min(worstTrade, t.pnl);
@@ -97,22 +119,39 @@ export function computePortfolioMetrics(
   const sortino = calcSortino(returns);
   const maxDrawdown = calcMaxDrawdown(equityCurve);
 
-  const dailyPnl = aggregatePnlBy(sorted, (t) => t.exit_time.slice(0, 10), 'date');
-  const weeklyPnl = aggregatePnlBy(sorted, (t) => {
-    const d = new Date(t.exit_time);
-    const week = getISOWeek(d);
-    return `${d.getFullYear()}-W${week}`;
-  }, 'week');
-  const monthlyPnl = aggregatePnlBy(sorted, (t) => t.exit_time.slice(0, 7), 'month');
+  const dailyPnl = aggregatePnlBy(sorted, (t) => t.exit_time.slice(0, 10), "date");
+  const weeklyPnl = aggregatePnlBy(
+    sorted,
+    (t) => {
+      const d = new Date(t.exit_time);
+      const week = getISOWeek(d);
+      return `${d.getFullYear()}-W${week}`;
+    },
+    "week",
+  );
+  const monthlyPnl = aggregatePnlBy(sorted, (t) => t.exit_time.slice(0, 7), "month");
 
   return {
-    totalReturn, totalReturnPct, winRate, profitFactor,
-    sharpe, sortino, maxDrawdown, avgWin, avgLoss,
-    expectancy, totalTrades, wins, losses,
+    totalReturn,
+    totalReturnPct,
+    winRate,
+    profitFactor,
+    sharpe,
+    sortino,
+    maxDrawdown,
+    avgWin,
+    avgLoss,
+    expectancy,
+    totalTrades,
+    wins,
+    losses,
     bestTrade: bestTrade === -Infinity ? 0 : bestTrade,
     worstTrade: worstTrade === Infinity ? 0 : worstTrade,
     avgHoldHours: totalTrades > 0 ? totalHoldHours / totalTrades : 0,
-    equityCurve, dailyPnl, weeklyPnl, monthlyPnl,
+    equityCurve,
+    dailyPnl,
+    weeklyPnl,
+    monthlyPnl,
   };
 }
 
@@ -122,8 +161,9 @@ export function computeExposure(
   prices: Record<string, number>,
   equity: number = STARTING_EQUITY,
 ): ExposureAnalysis {
-  const byAsset: ExposureAnalysis['byAsset'] = [];
-  let longValue = 0, shortValue = 0;
+  const byAsset: ExposureAnalysis["byAsset"] = [];
+  let longValue = 0,
+    shortValue = 0;
 
   for (const pos of positions) {
     const price = prices[pos.symbol] ?? pos.entry_price;
@@ -135,7 +175,7 @@ export function computeExposure(
       pct: equity > 0 ? value / equity : 0,
       side: pos.side,
     });
-    if (pos.side === 'long') longValue += value;
+    if (pos.side === "long") longValue += value;
     else shortValue += value;
   }
 
@@ -220,5 +260,10 @@ function getISOWeek(d: Date): string {
   date.setHours(0, 0, 0, 0);
   date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
   const week1 = new Date(date.getFullYear(), 0, 4);
-  return String(1 + Math.round(((date.getTime() - week1.getTime()) / 86_400_000 - 3 + ((week1.getDay() + 6) % 7)) / 7)).padStart(2, '0');
+  return String(
+    1 +
+      Math.round(
+        ((date.getTime() - week1.getTime()) / 86_400_000 - 3 + ((week1.getDay() + 6) % 7)) / 7,
+      ),
+  ).padStart(2, "0");
 }

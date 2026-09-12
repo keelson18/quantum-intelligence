@@ -6,33 +6,46 @@
 
 /// <reference lib="webworker" />
 
-import * as tf from '@tensorflow/tfjs';
-import { buildModel, toOneHot } from './modelDefinition';
-import type { WorkerRequest, WorkerResponse, EpochMetrics, PreparedDataset, Architecture, Hyperparams, TrainingResult } from './types';
+import * as tf from "@tensorflow/tfjs";
+import { buildModel, toOneHot } from "./modelDefinition";
+import type {
+  WorkerRequest,
+  WorkerResponse,
+  EpochMetrics,
+  PreparedDataset,
+  Architecture,
+  Hyperparams,
+  TrainingResult,
+} from "./types";
 
 // Force CPU backend in the worker — WebGL contexts can't be shared across threads.
-tf.setBackend('cpu').then(() => tf.ready()).catch((err) => console.error('[worker] backend error:', err));
+tf.setBackend("cpu")
+  .then(() => tf.ready())
+  .catch((err) => console.error("[worker] backend error:", err));
 
 let cancelled = false;
 
 self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   const msg = e.data;
-  if (msg.type === 'cancel') {
+  if (msg.type === "cancel") {
     cancelled = true;
-    post({ type: 'cancelled' });
+    post({ type: "cancelled" });
     return;
   }
-  if (msg.type !== 'train') return;
+  if (msg.type !== "train") return;
 
   cancelled = false;
   const { dataset, architecture, hyperparams, modelId } = msg;
 
   try {
     const result = await runTraining(dataset, architecture, hyperparams, modelId);
-    if (cancelled) { post({ type: 'cancelled' }); return; }
-    post({ type: 'done', result });
+    if (cancelled) {
+      post({ type: "cancelled" });
+      return;
+    }
+    post({ type: "done", result });
   } catch (err) {
-    post({ type: 'error', message: err instanceof Error ? err.message : String(err) });
+    post({ type: "error", message: err instanceof Error ? err.message : String(err) });
   }
 };
 
@@ -42,7 +55,7 @@ async function runTraining(
   hp: Hyperparams,
   _modelId: string,
 ): Promise<TrainingResult> {
-  const isSequence = architecture === 'lstm' || architecture === 'transformer';
+  const isSequence = architecture === "lstm" || architecture === "transformer";
   const useSequences = isSequence && dataset.sequences && dataset.sequences.length > 0;
 
   // Build input tensors.
@@ -65,14 +78,26 @@ async function runTraining(
 
     xsTrain = tf.tensor3d(trainSeqs);
     xsVal = tf.tensor3d(valSeqs);
-    ysTrain = hp.taskType === 'classification' ? toOneHot(trainLabels, hp.numClasses) : tf.tensor1d(trainLabels);
-    ysVal = hp.taskType === 'classification' ? toOneHot(valLabels, hp.numClasses) : tf.tensor1d(valLabels);
+    ysTrain =
+      hp.taskType === "classification"
+        ? toOneHot(trainLabels, hp.numClasses)
+        : tf.tensor1d(trainLabels);
+    ysVal =
+      hp.taskType === "classification"
+        ? toOneHot(valLabels, hp.numClasses)
+        : tf.tensor1d(valLabels);
   } else {
     // Dense model: use flat feature vectors.
     xsTrain = tf.tensor2d(dataset.xTrain);
     xsVal = tf.tensor2d(dataset.xVal);
-    ysTrain = hp.taskType === 'classification' ? toOneHot(dataset.yTrain, hp.numClasses) : tf.tensor1d(dataset.yTrain);
-    ysVal = hp.taskType === 'classification' ? toOneHot(dataset.yVal, hp.numClasses) : tf.tensor1d(dataset.yVal);
+    ysTrain =
+      hp.taskType === "classification"
+        ? toOneHot(dataset.yTrain, hp.numClasses)
+        : tf.tensor1d(dataset.yTrain);
+    ysVal =
+      hp.taskType === "classification"
+        ? toOneHot(dataset.yVal, hp.numClasses)
+        : tf.tensor1d(dataset.yVal);
   }
 
   const model = buildModel(architecture, hp, numFeatures);
@@ -99,12 +124,18 @@ async function runTraining(
           valAccuracy: logs?.val_acc,
         };
         metricsHistory.push(m);
-        post({ type: 'epoch', metrics: m });
+        post({ type: "epoch", metrics: m });
       },
     },
   });
 
-  const last = metricsHistory[metricsHistory.length - 1] ?? { loss: 0, valLoss: 0, accuracy: 0, valAccuracy: 0, epoch: 0 };
+  const last = metricsHistory[metricsHistory.length - 1] ?? {
+    loss: 0,
+    valLoss: 0,
+    accuracy: 0,
+    valAccuracy: 0,
+    epoch: 0,
+  };
   const result: TrainingResult = {
     metrics: metricsHistory,
     finalMetrics: {
@@ -120,9 +151,9 @@ async function runTraining(
 
   // Save to IndexedDB directly from the worker (works because IndexedDB is accessible).
   try {
-    await model.save('indexeddb://qi-model-' + _modelId);
+    await model.save("indexeddb://qi-model-" + _modelId);
   } catch (err) {
-    console.error('[worker] save error:', err);
+    console.error("[worker] save error:", err);
   }
 
   // Cleanup tensors.
@@ -134,7 +165,6 @@ async function runTraining(
 
   return result;
 }
-
 
 function post(msg: WorkerResponse): void {
   (self as unknown as Worker).postMessage(msg);

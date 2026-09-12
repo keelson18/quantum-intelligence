@@ -1,8 +1,12 @@
-import type { TradeExplanation } from '../lib/types';
-import { Lightbulb, Shield, Target, AlertCircle, ListChecks } from 'lucide-react';
+import type { TradeExplanation } from "../lib/types";
+import { Lightbulb, Shield, Target, AlertCircle, ListChecks } from "lucide-react";
 
 // Explainable AI panel — shows the full reasoning behind a trade recommendation.
-export default function ExplanationPanel({ explanation }: { explanation: TradeExplanation | null }) {
+export default function ExplanationPanel({
+  explanation,
+}: {
+  explanation: TradeExplanation | null;
+}) {
   if (!explanation) return null;
 
   return (
@@ -24,7 +28,10 @@ export default function ExplanationPanel({ explanation }: { explanation: TradeEx
           </div>
           <div className="flex flex-wrap gap-1.5">
             {explanation.indicators.map((ind, i) => (
-              <span key={i} className="px-2 py-0.5 rounded bg-bg/60 border border-border/50 text-muted tabular-nums">
+              <span
+                key={i}
+                className="px-2 py-0.5 rounded bg-bg/60 border border-border/50 text-muted tabular-nums"
+              >
                 {ind}
               </span>
             ))}
@@ -36,7 +43,10 @@ export default function ExplanationPanel({ explanation }: { explanation: TradeEx
           <div className="text-muted mb-1">Patterns Detected</div>
           <div className="flex flex-wrap gap-1.5">
             {explanation.patterns.map((p, i) => (
-              <span key={i} className="px-2 py-0.5 rounded bg-bg/60 border border-border/50 text-muted">
+              <span
+                key={i}
+                className="px-2 py-0.5 rounded bg-bg/60 border border-border/50 text-muted"
+              >
                 {p}
               </span>
             ))}
@@ -45,7 +55,10 @@ export default function ExplanationPanel({ explanation }: { explanation: TradeEx
 
         {/* Confidence */}
         <Section title="Confidence Score">
-          <span className="font-medium tabular-nums">{(explanation.confidence * 100).toFixed(0)}%</span> — blended from all contributing signals weighted by their individual confidence.
+          <span className="font-medium tabular-nums">
+            {(explanation.confidence * 100).toFixed(0)}%
+          </span>{" "}
+          — blended from all contributing signals weighted by their individual confidence.
         </Section>
 
         {/* Risk */}
@@ -80,7 +93,15 @@ export default function ExplanationPanel({ explanation }: { explanation: TradeEx
   );
 }
 
-function Section({ title, icon: Icon, children }: { title: string; icon?: typeof Shield; children: React.ReactNode }) {
+function Section({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon?: typeof Shield;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <div className="flex items-center gap-1.5 text-muted mb-1">

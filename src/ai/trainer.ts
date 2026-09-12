@@ -4,19 +4,24 @@
 // and falls back to main-thread training if Workers are unavailable.
 // ============================================================================
 
-import * as tf from '@tensorflow/tfjs';
-import { buildModel, toOneHot } from './modelDefinition';
-import { saveModelWeights, createModelMeta, updateModelMeta } from './modelStorage';
+import * as tf from "@tensorflow/tfjs";
+import { buildModel, toOneHot } from "./modelDefinition";
+import { saveModelWeights, createModelMeta, updateModelMeta } from "./modelStorage";
 import type {
-  PreparedDataset, Architecture, Hyperparams, TrainingResult,
-  EpochMetrics, WorkerRequest, WorkerResponse,
-} from './types';
+  PreparedDataset,
+  Architecture,
+  Hyperparams,
+  TrainingResult,
+  EpochMetrics,
+  WorkerRequest,
+  WorkerResponse,
+} from "./types";
 
 export interface TrainingCallbacks {
   onEpoch?: (metrics: EpochMetrics) => void;
   onDone?: (result: TrainingResult, modelId: string) => void;
   onError?: (message: string) => void;
-  onStatus?: (status: 'starting' | 'training' | 'saving' | 'done' | 'cancelled') => void;
+  onStatus?: (status: "starting" | "training" | "saving" | "done" | "cancelled") => void;
 }
 
 // Train a model using a Web Worker. Returns a cancel function.
@@ -30,14 +35,18 @@ export async function trainWithWorker(
   callbacks: TrainingCallbacks = {},
 ): Promise<{ result: TrainingResult; modelId: string; cancel: () => void }> {
   // Create the model metadata row first so we have an ID.
-  const modelId = await createModelMeta(modelName, architecture, hp, dataset.featureNames, ['down', 'flat', 'up']);
-  if (!modelId) throw new Error('Failed to create model metadata in Supabase.');
+  const modelId = await createModelMeta(modelName, architecture, hp, dataset.featureNames, [
+    "down",
+    "flat",
+    "up",
+  ]);
+  if (!modelId) throw new Error("Failed to create model metadata in Supabase.");
 
-  callbacks.onStatus?.('starting');
-  await updateModelMeta(modelId, 'training', null);
+  callbacks.onStatus?.("starting");
+  await updateModelMeta(modelId, "training", null);
 
   // Spawn the worker. Vite handles the import URL.
-  const worker = new Worker(new URL('./trainingWorker.ts', import.meta.url), { type: 'module' });
+  const worker = new Worker(new URL("./trainingWorker.ts", import.meta.url), { type: "module" });
 
   let resolveFn: (result: TrainingResult) => void;
   let rejectFn: (err: Error) => void;
@@ -49,30 +58,30 @@ export async function trainWithWorker(
   worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
     const msg = e.data;
     switch (msg.type) {
-      case 'ready':
+      case "ready":
         break;
-      case 'epoch':
+      case "epoch":
         callbacks.onEpoch?.(msg.metrics);
-        callbacks.onStatus?.('training');
+        callbacks.onStatus?.("training");
         break;
-      case 'done':
-        callbacks.onStatus?.('saving');
-        updateModelMeta(modelId, 'trained', msg.result).then(() => {
-          callbacks.onStatus?.('done');
+      case "done":
+        callbacks.onStatus?.("saving");
+        updateModelMeta(modelId, "trained", msg.result).then(() => {
+          callbacks.onStatus?.("done");
           callbacks.onDone?.(msg.result, modelId);
           resolveFn(msg.result);
         });
         break;
-      case 'weights':
+      case "weights":
         // Weights are saved by the worker to IndexedDB directly.
         break;
-      case 'error':
+      case "error":
         callbacks.onError?.(msg.message);
-        updateModelMeta(modelId, 'failed', null);
+        updateModelMeta(modelId, "failed", null);
         rejectFn(new Error(msg.message));
         break;
-      case 'cancelled':
-        callbacks.onStatus?.('cancelled');
+      case "cancelled":
+        callbacks.onStatus?.("cancelled");
         resolveFn({
           metrics: [],
           finalMetrics: { loss: 0, accuracy: 0, valLoss: 0, valAccuracy: 0 },
@@ -89,11 +98,11 @@ export async function trainWithWorker(
     rejectFn(new Error(e.message));
   };
 
-  const req: WorkerRequest = { type: 'train', dataset, architecture, hyperparams: hp, modelId };
+  const req: WorkerRequest = { type: "train", dataset, architecture, hyperparams: hp, modelId };
   worker.postMessage(req);
 
   const cancel = () => {
-    worker.postMessage({ type: 'cancel' } satisfies WorkerRequest);
+    worker.postMessage({ type: "cancel" } satisfies WorkerRequest);
   };
 
   const result = await resultPromise;
@@ -110,12 +119,16 @@ export async function trainOnMainThread(
   modelName: string,
   callbacks: TrainingCallbacks = {},
 ): Promise<{ result: TrainingResult; modelId: string }> {
-  const modelId = await createModelMeta(modelName, architecture, hp, dataset.featureNames, ['down', 'flat', 'up']);
-  if (!modelId) throw new Error('Failed to create model metadata in Supabase.');
-  callbacks.onStatus?.('starting');
-  await updateModelMeta(modelId, 'training', null);
+  const modelId = await createModelMeta(modelName, architecture, hp, dataset.featureNames, [
+    "down",
+    "flat",
+    "up",
+  ]);
+  if (!modelId) throw new Error("Failed to create model metadata in Supabase.");
+  callbacks.onStatus?.("starting");
+  await updateModelMeta(modelId, "training", null);
 
-  const isSequence = architecture === 'lstm' || architecture === 'transformer';
+  const isSequence = architecture === "lstm" || architecture === "transformer";
   const useSequences = isSequence && dataset.sequences && dataset.sequences.length > 0;
 
   let xsTrain: tf.Tensor, ysTrain: tf.Tensor, xsVal: tf.Tensor, ysVal: tf.Tensor;
@@ -157,9 +170,15 @@ export async function trainOnMainThread(
     },
   });
 
-  callbacks.onStatus?.('saving');
+  callbacks.onStatus?.("saving");
   await saveModelWeights(model, modelId);
-  const last = metricsHistory[metricsHistory.length - 1] ?? { loss: 0, valLoss: 0, accuracy: 0, valAccuracy: 0, epoch: 0 };
+  const last = metricsHistory[metricsHistory.length - 1] ?? {
+    loss: 0,
+    valLoss: 0,
+    accuracy: 0,
+    valAccuracy: 0,
+    epoch: 0,
+  };
   const result: TrainingResult = {
     metrics: metricsHistory,
     finalMetrics: {
@@ -172,10 +191,14 @@ export async function trainOnMainThread(
     mean: dataset.mean,
     std: dataset.std,
   };
-  await updateModelMeta(modelId, 'trained', result);
-  callbacks.onStatus?.('done');
+  await updateModelMeta(modelId, "trained", result);
+  callbacks.onStatus?.("done");
   callbacks.onDone?.(result, modelId);
 
-  xsTrain.dispose(); ysTrain.dispose(); xsVal.dispose(); ysVal.dispose(); model.dispose();
+  xsTrain.dispose();
+  ysTrain.dispose();
+  xsVal.dispose();
+  ysVal.dispose();
+  model.dispose();
   return { result, modelId };
 }

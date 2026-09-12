@@ -16,10 +16,7 @@ interface BaseProps {
 }
 
 /** Inline spinner with an accessible live-region label. */
-export function LoadingState({
-  label = "Loading…",
-  className,
-}: BaseProps & { label?: string }) {
+export function LoadingState({ label = "Loading…", className }: BaseProps & { label?: string }) {
   return (
     <div
       role="status"
@@ -118,10 +115,7 @@ export function SkeletonList({ rows = 5, className }: BaseProps & { rows?: numbe
 /** Card-grid placeholder for dashboard panels. */
 export function SkeletonCards({ count = 3, className }: BaseProps & { count?: number }) {
   return (
-    <div
-      aria-hidden="true"
-      className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}
-    >
+    <div aria-hidden="true" className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}>
       {Array.from({ length: count }, (_, index) => (
         <div key={index} className="space-y-3 rounded-lg border border-border p-4">
           <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />

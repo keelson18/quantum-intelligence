@@ -1,10 +1,16 @@
-import type { LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 // PlaceholderPage — used for routes that aren't fully built yet.
 // Shows the page title and a "coming soon" state with relevant context.
-export default function PlaceholderPage({ icon: Icon, title, description }: {
-  icon: LucideIcon; title: string; description: string;
+export default function PlaceholderPage({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
 }) {
   return (
     <div className="px-4 lg:px-6 py-4">

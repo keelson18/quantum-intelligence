@@ -3,9 +3,9 @@
 // All data shapes, model inputs/outputs, and training configs are typed here.
 // ============================================================================
 
-export type Architecture = 'dense' | 'lstm' | 'transformer';
-export type TaskType = 'classification' | 'regression';
-export type ModelStatus = 'untrained' | 'training' | 'trained' | 'failed';
+export type Architecture = "dense" | "lstm" | "transformer";
+export type TaskType = "classification" | "regression";
+export type ModelStatus = "untrained" | "training" | "trained" | "failed";
 
 export interface Hyperparams {
   learningRate: number;
@@ -27,7 +27,7 @@ export const DEFAULT_HYPERPARAMS: Hyperparams = {
   hiddenUnits: [64, 32],
   dropout: 0.1,
   sequenceLength: 20,
-  taskType: 'classification',
+  taskType: "classification",
   numClasses: 3, // up / flat / down
 };
 
@@ -37,8 +37,8 @@ export interface TrainingSample {
 }
 
 export interface PreparedDataset {
-  xTrain: number[][];       // [samples][features]
-  yTrain: number[];         // labels (class index or regression value)
+  xTrain: number[][]; // [samples][features]
+  yTrain: number[]; // labels (class index or regression value)
   xVal: number[][];
   yVal: number[];
   featureNames: string[];
@@ -96,16 +96,22 @@ export interface InferenceResult {
 
 // Messages exchanged between main thread and the training Web Worker.
 export type WorkerRequest =
-  | { type: 'train'; dataset: PreparedDataset; architecture: Architecture; hyperparams: Hyperparams; modelId: string }
-  | { type: 'cancel' };
+  | {
+      type: "train";
+      dataset: PreparedDataset;
+      architecture: Architecture;
+      hyperparams: Hyperparams;
+      modelId: string;
+    }
+  | { type: "cancel" };
 
 export type WorkerResponse =
-  | { type: 'ready' }
-  | { type: 'epoch'; metrics: EpochMetrics }
-  | { type: 'done'; result: TrainingResult; topology?: object }
-  | { type: 'weights'; weights: ArrayBuffer[] }
-  | { type: 'error'; message: string }
-  | { type: 'cancelled' };
+  | { type: "ready" }
+  | { type: "epoch"; metrics: EpochMetrics }
+  | { type: "done"; result: TrainingResult; topology?: object }
+  | { type: "weights"; weights: ArrayBuffer[] }
+  | { type: "error"; message: string }
+  | { type: "cancelled" };
 
 // Database row shapes.
 export interface AIModelRow {

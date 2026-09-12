@@ -1,5 +1,5 @@
-import { TrendingUp, TrendingDown, Minus, Gauge } from 'lucide-react';
-import type { InferenceResult } from '../ai/types';
+import { TrendingUp, TrendingDown, Minus, Gauge } from "lucide-react";
+import type { InferenceResult } from "../ai/types";
 
 interface Props {
   result: InferenceResult | null;
@@ -25,17 +25,19 @@ export default function PredictionDisplay({ result, loading, modelName }: Props)
         <h3 className="text-sm font-semibold flex items-center gap-2 mb-2">
           <Gauge className="w-4 h-4 text-primary" /> In-Browser Prediction
         </h3>
-        <div className="text-xs text-muted">Train a model first, then run inference to see predictions here.</div>
+        <div className="text-xs text-muted">
+          Train a model first, then run inference to see predictions here.
+        </div>
       </div>
     );
   }
 
   const label = result.label ?? `class_${result.prediction}`;
-  const isUp = label === 'up' || result.prediction === 2;
-  const isDown = label === 'down' || result.prediction === 0;
+  const isUp = label === "up" || result.prediction === 2;
+  const isDown = label === "down" || result.prediction === 0;
   const Icon = isUp ? TrendingUp : isDown ? TrendingDown : Minus;
-  const color = isUp ? 'text-success' : isDown ? 'text-danger' : 'text-muted';
-  const bgColor = isUp ? 'bg-success/15' : isDown ? 'bg-danger/15' : 'bg-muted/15';
+  const color = isUp ? "text-success" : isDown ? "text-danger" : "text-muted";
+  const bgColor = isUp ? "bg-success/15" : isDown ? "bg-danger/15" : "bg-muted/15";
 
   return (
     <div className="bg-surface border border-border rounded-xl p-4 animate-fade-in">
@@ -55,7 +57,9 @@ export default function PredictionDisplay({ result, loading, modelName }: Props)
           <div className="text-xs text-muted">Predicted direction</div>
         </div>
         <div className="ml-auto text-right">
-          <div className="text-lg font-semibold tabular-nums">{(result.confidence * 100).toFixed(1)}%</div>
+          <div className="text-lg font-semibold tabular-nums">
+            {(result.confidence * 100).toFixed(1)}%
+          </div>
           <div className="text-xs text-muted">Confidence</div>
         </div>
       </div>
@@ -64,18 +68,20 @@ export default function PredictionDisplay({ result, loading, modelName }: Props)
       {result.outputs.length > 1 && (
         <div className="space-y-1.5 mb-2">
           <div className="text-xs text-muted">Class probabilities</div>
-          {['down', 'flat', 'up'].map((cls, i) => {
+          {["down", "flat", "up"].map((cls, i) => {
             const prob = result.outputs[i] ?? 0;
             return (
               <div key={cls} className="flex items-center gap-2">
                 <span className="text-xs w-10 capitalize">{cls}</span>
                 <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${cls === 'up' ? 'bg-success' : cls === 'down' ? 'bg-danger' : 'bg-muted'}`}
+                    className={`h-full rounded-full ${cls === "up" ? "bg-success" : cls === "down" ? "bg-danger" : "bg-muted"}`}
                     style={{ width: `${prob * 100}%` }}
                   />
                 </div>
-                <span className="text-xs tabular-nums text-muted w-10 text-right">{(prob * 100).toFixed(1)}%</span>
+                <span className="text-xs tabular-nums text-muted w-10 text-right">
+                  {(prob * 100).toFixed(1)}%
+                </span>
               </div>
             );
           })}

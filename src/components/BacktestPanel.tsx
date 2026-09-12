@@ -1,5 +1,5 @@
-import type { BacktestMetrics, MonteCarloResult, WalkForwardResult } from '../lib/types';
-import { Activity, BarChart3, Dice5, GitBranch } from 'lucide-react';
+import type { BacktestMetrics, MonteCarloResult, WalkForwardResult } from "../lib/types";
+import { Activity, BarChart3, Dice5, GitBranch } from "lucide-react";
 
 interface Props {
   metrics: BacktestMetrics | null;
@@ -22,13 +22,14 @@ export default function BacktestPanel({ metrics, walkForward, monteCarlo, loadin
           disabled={loading}
           className="text-xs px-2.5 py-1 rounded bg-primary/15 text-primary hover:bg-primary/25 disabled:opacity-40 transition-colors"
         >
-          {loading ? 'Running…' : 'Run Backtest'}
+          {loading ? "Running…" : "Run Backtest"}
         </button>
       </div>
 
       {!metrics && !loading && (
         <div className="text-xs text-muted py-6 text-center">
-          Run a backtest to see walk-forward validation, Monte Carlo simulation, and performance metrics.
+          Run a backtest to see walk-forward validation, Monte Carlo simulation, and performance
+          metrics.
         </div>
       )}
 
@@ -53,8 +54,16 @@ export default function BacktestPanel({ metrics, walkForward, monteCarlo, loadin
           <div className="grid grid-cols-2 gap-2">
             <Metric label="Avg Win" value={`$${metrics.avgWin.toFixed(0)}`} good />
             <Metric label="Avg Loss" value={`$${metrics.avgLoss.toFixed(0)}`} bad />
-            <Metric label="Expectancy" value={`$${metrics.expectancy.toFixed(0)}`} good={metrics.expectancy >= 0} bad={metrics.expectancy < 0} />
-            <Metric label="R:R" value={metrics.avgLoss > 0 ? (metrics.avgWin / metrics.avgLoss).toFixed(2) : '—'} />
+            <Metric
+              label="Expectancy"
+              value={`$${metrics.expectancy.toFixed(0)}`}
+              good={metrics.expectancy >= 0}
+              bad={metrics.expectancy < 0}
+            />
+            <Metric
+              label="R:R"
+              value={metrics.avgLoss > 0 ? (metrics.avgWin / metrics.avgLoss).toFixed(2) : "—"}
+            />
           </div>
 
           {/* Walk-forward */}
@@ -64,8 +73,14 @@ export default function BacktestPanel({ metrics, walkForward, monteCarlo, loadin
                 <GitBranch className="w-3 h-3 text-primary" /> Walk-Forward Validation
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <Metric label="IS Win%" value={`${(walkForward.inSample.winRate * 100).toFixed(1)}%`} />
-                <Metric label="OOS Win%" value={`${(walkForward.outOfSample.winRate * 100).toFixed(1)}%`} />
+                <Metric
+                  label="IS Win%"
+                  value={`${(walkForward.inSample.winRate * 100).toFixed(1)}%`}
+                />
+                <Metric
+                  label="OOS Win%"
+                  value={`${(walkForward.outOfSample.winRate * 100).toFixed(1)}%`}
+                />
                 <Metric
                   label="Efficiency"
                   value={`${(walkForward.efficiency * 100).toFixed(0)}%`}
@@ -80,15 +95,37 @@ export default function BacktestPanel({ metrics, walkForward, monteCarlo, loadin
           {monteCarlo && monteCarlo.simulations > 0 && (
             <div className="pt-3 border-t border-border/50">
               <div className="text-xs font-medium flex items-center gap-1.5 mb-2">
-                <Dice5 className="w-3 h-3 text-primary" /> Monte Carlo ({monteCarlo.simulations.toLocaleString()} sims)
+                <Dice5 className="w-3 h-3 text-primary" /> Monte Carlo (
+                {monteCarlo.simulations.toLocaleString()} sims)
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <Metric label="Median Ret" value={`${(monteCarlo.medianReturn * 100).toFixed(1)}%`} good={monteCarlo.medianReturn > 0} bad={monteCarlo.medianReturn < 0} />
+                <Metric
+                  label="Median Ret"
+                  value={`${(monteCarlo.medianReturn * 100).toFixed(1)}%`}
+                  good={monteCarlo.medianReturn > 0}
+                  bad={monteCarlo.medianReturn < 0}
+                />
                 <Metric label="5th pct" value={`${(monteCarlo.p5Return * 100).toFixed(1)}%`} bad />
-                <Metric label="95th pct" value={`${(monteCarlo.p95Return * 100).toFixed(1)}%`} good />
-                <Metric label="Median DD" value={`${(monteCarlo.medianMaxDrawdown * 100).toFixed(1)}%`} bad />
-                <Metric label="Worst DD" value={`${(monteCarlo.worstMaxDrawdown * 100).toFixed(1)}%`} bad />
-                <Metric label="Ruin Prob" value={`${(monteCarlo.ruinProbability * 100).toFixed(1)}%`} bad={monteCarlo.ruinProbability > 0.05} />
+                <Metric
+                  label="95th pct"
+                  value={`${(monteCarlo.p95Return * 100).toFixed(1)}%`}
+                  good
+                />
+                <Metric
+                  label="Median DD"
+                  value={`${(monteCarlo.medianMaxDrawdown * 100).toFixed(1)}%`}
+                  bad
+                />
+                <Metric
+                  label="Worst DD"
+                  value={`${(monteCarlo.worstMaxDrawdown * 100).toFixed(1)}%`}
+                  bad
+                />
+                <Metric
+                  label="Ruin Prob"
+                  value={`${(monteCarlo.ruinProbability * 100).toFixed(1)}%`}
+                  bad={monteCarlo.ruinProbability > 0.05}
+                />
               </div>
             </div>
           )}
@@ -106,8 +143,18 @@ export default function BacktestPanel({ metrics, walkForward, monteCarlo, loadin
   );
 }
 
-function Metric({ label, value, good, bad }: { label: string; value: string; good?: boolean; bad?: boolean }) {
-  const color = good ? 'text-success' : bad ? 'text-danger' : 'text-text';
+function Metric({
+  label,
+  value,
+  good,
+  bad,
+}: {
+  label: string;
+  value: string;
+  good?: boolean;
+  bad?: boolean;
+}) {
+  const color = good ? "text-success" : bad ? "text-danger" : "text-text";
   return (
     <div className="bg-bg/50 rounded-lg p-2 border border-border/50">
       <div className="text-xs text-muted mb-0.5">{label}</div>
@@ -119,18 +166,22 @@ function Metric({ label, value, good, bad }: { label: string; value: string; goo
 function EquitySparkline({ curve }: { curve: { time: number; equity: number }[] }) {
   if (curve.length < 2) return null;
   const vals = curve.map((p) => p.equity);
-  const min = Math.min(...vals), max = Math.max(...vals);
+  const min = Math.min(...vals),
+    max = Math.max(...vals);
   const range = max - min || 1;
-  const w = 100, h = 30;
-  const points = vals.map((v, i) => {
-    const x = (i / (vals.length - 1)) * w;
-    const y = h - ((v - min) / range) * h;
-    return `${x},${y}`;
-  }).join(' ');
+  const w = 100,
+    h = 30;
+  const points = vals
+    .map((v, i) => {
+      const x = (i / (vals.length - 1)) * w;
+      const y = h - ((v - min) / range) * h;
+      return `${x},${y}`;
+    })
+    .join(" ");
   const up = vals[vals.length - 1] >= vals[0];
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-8" preserveAspectRatio="none">
-      <polyline points={points} fill="none" stroke={up ? '#22c55e' : '#ef4444'} strokeWidth="1" />
+      <polyline points={points} fill="none" stroke={up ? "#22c55e" : "#ef4444"} strokeWidth="1" />
     </svg>
   );
 }

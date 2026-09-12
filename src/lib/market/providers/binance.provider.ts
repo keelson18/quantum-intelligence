@@ -1,6 +1,6 @@
-import type { Candle, Timeframe } from '../../types';
-import { TIMEFRAMES } from '../../types';
-import { APP_CONFIG } from '../../../config/env';
+import type { Candle, Timeframe } from "../../types";
+import { TIMEFRAMES } from "../../types";
+import { APP_CONFIG } from "../../../config/env";
 
 const REST = APP_CONFIG.marketData.restUrl;
 const WS = APP_CONFIG.marketData.wsUrl;
@@ -28,8 +28,17 @@ export async function fetchKlines(
 }
 
 // Fetch live order book depth from Binance REST. Returns top N bids and asks.
-export interface OrderBookEntry { price: number; quantity: number; total: number; }
-export interface OrderBook { bids: OrderBookEntry[]; asks: OrderBookEntry[]; spread: number; midPrice: number; }
+export interface OrderBookEntry {
+  price: number;
+  quantity: number;
+  total: number;
+}
+export interface OrderBook {
+  bids: OrderBookEntry[];
+  asks: OrderBookEntry[];
+  spread: number;
+  midPrice: number;
+}
 
 export async function fetchOrderBook(symbol: string, limit = 20): Promise<OrderBook> {
   const url = `${REST}/api/v3/depth?symbol=${symbol}&limit=${limit}`;
@@ -63,7 +72,7 @@ export async function fetchOrderBook(symbol: string, limit = 20): Promise<OrderB
 export function subscribeLivePrice(
   symbols: string[],
   onPrice: (symbol: string, price: number) => void,
-  onStatus?: (status: 'connecting' | 'open' | 'closed' | 'reconnecting', detail?: string) => void,
+  onStatus?: (status: "connecting" | "open" | "closed" | "reconnecting", detail?: string) => void,
 ): () => void {
   let ws: WebSocket | null = null;
   let backoff = 1000;
@@ -72,13 +81,13 @@ export function subscribeLivePrice(
 
   const connect = () => {
     if (closed) return;
-    onStatus?.('connecting');
-    const streams = symbols.map((s) => `${s.toLowerCase()}@miniTicker`).join('/');
+    onStatus?.("connecting");
+    const streams = symbols.map((s) => `${s.toLowerCase()}@miniTicker`).join("/");
     ws = new WebSocket(`${WS}/${streams}`);
 
     ws.onopen = () => {
       backoff = 1000;
-      onStatus?.('open');
+      onStatus?.("open");
     };
 
     ws.onmessage = (ev) => {
@@ -92,7 +101,7 @@ export function subscribeLivePrice(
 
     ws.onclose = () => {
       if (closed) return;
-      onStatus?.('reconnecting', `closed, retry in ${Math.round(backoff / 1000)}s`);
+      onStatus?.("reconnecting", `closed, retry in ${Math.round(backoff / 1000)}s`);
       timer = setTimeout(() => {
         backoff = Math.min(backoff * 2, 30000);
         connect();
@@ -101,7 +110,11 @@ export function subscribeLivePrice(
 
     ws.onerror = () => {
       // onclose will follow and trigger reconnect.
-      try { ws?.close(); } catch { /* noop */ }
+      try {
+        ws?.close();
+      } catch {
+        /* noop */
+      }
     };
   };
 
@@ -110,7 +123,11 @@ export function subscribeLivePrice(
   return () => {
     closed = true;
     if (timer) clearTimeout(timer);
-    try { ws?.close(); } catch { /* noop */ }
+    try {
+      ws?.close();
+    } catch {
+      /* noop */
+    }
   };
 }
 
@@ -120,7 +137,7 @@ export function subscribeKlines(
   symbol: string,
   timeframe: Timeframe,
   onCandle: (candle: Candle, closed: boolean) => void,
-  onStatus?: (status: 'connecting' | 'open' | 'closed' | 'reconnecting', detail?: string) => void,
+  onStatus?: (status: "connecting" | "open" | "closed" | "reconnecting", detail?: string) => void,
 ): () => void {
   let ws: WebSocket | null = null;
   let backoff = 1000;
@@ -130,12 +147,12 @@ export function subscribeKlines(
 
   const connect = () => {
     if (closed) return;
-    onStatus?.('connecting');
+    onStatus?.("connecting");
     ws = new WebSocket(`${WS}/${symbol.toLowerCase()}@kline_${tf}`);
 
     ws.onopen = () => {
       backoff = 1000;
-      onStatus?.('open');
+      onStatus?.("open");
     };
 
     ws.onmessage = (ev) => {
@@ -161,7 +178,7 @@ export function subscribeKlines(
 
     ws.onclose = () => {
       if (closed) return;
-      onStatus?.('reconnecting', `closed, retry in ${Math.round(backoff / 1000)}s`);
+      onStatus?.("reconnecting", `closed, retry in ${Math.round(backoff / 1000)}s`);
       timer = setTimeout(() => {
         backoff = Math.min(backoff * 2, 30000);
         connect();
@@ -169,7 +186,11 @@ export function subscribeKlines(
     };
 
     ws.onerror = () => {
-      try { ws?.close(); } catch { /* noop */ }
+      try {
+        ws?.close();
+      } catch {
+        /* noop */
+      }
     };
   };
 
@@ -178,7 +199,11 @@ export function subscribeKlines(
   return () => {
     closed = true;
     if (timer) clearTimeout(timer);
-    try { ws?.close(); } catch { /* noop */ }
+    try {
+      ws?.close();
+    } catch {
+      /* noop */
+    }
   };
 }
 
@@ -186,16 +211,16 @@ export function subscribeKlines(
 // Provider adapter — the only place that knows about Binance symbols.
 // ============================================================================
 
-import type { MarketDataProvider } from '../provider';
-import { resolveInstrument } from '../instruments';
+import type { MarketDataProvider } from "../provider";
+import { resolveInstrument } from "../instruments";
 
 function providerSymbol(canonical: string): string {
   const instrument = resolveInstrument(canonical);
-  return (instrument?.symbol ?? canonical.replace('/', '')).toUpperCase();
+  return (instrument?.symbol ?? canonical.replace("/", "")).toUpperCase();
 }
 
 export const binanceProvider: MarketDataProvider = {
-  id: 'binance',
+  id: "binance",
   toProviderSymbol: providerSymbol,
   fetchCandles: (canonical, timeframe, limit) =>
     fetchKlines(providerSymbol(canonical), timeframe, limit),

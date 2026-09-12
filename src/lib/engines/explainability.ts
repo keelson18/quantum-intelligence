@@ -6,10 +6,10 @@
 // which versions were used. Explanations reference REAL evidence only.
 // ============================================================================
 
-import type { TradeExplanation } from '../types';
-import { runEngine, type EngineResult, type Evidence } from './contract';
-import { ENGINE_REGISTRY } from './registry';
-import type { EngineResult as ER } from './contract';
+import type { TradeExplanation } from "../types";
+import { runEngine, type EngineResult, type Evidence } from "./contract";
+import { ENGINE_REGISTRY } from "./registry";
+import type { EngineResult as ER } from "./contract";
 
 const D = ENGINE_REGISTRY[15];
 
@@ -40,7 +40,10 @@ export interface ExplainabilityInputs {
   versions: Record<string, string>;
 }
 
-export function explainabilityEngine(contextId: string, input: ExplainabilityInputs): EngineResult<DecisionExplanation> {
+export function explainabilityEngine(
+  contextId: string,
+  input: ExplainabilityInputs,
+): EngineResult<DecisionExplanation> {
   return runEngine<DecisionExplanation>(D.id, D.version, contextId, () => {
     const contributingEngines = input.engines.map((e) => ({
       engine: e.engine_name,
@@ -65,19 +68,27 @@ export function explainabilityEngine(contextId: string, input: ExplainabilityInp
     };
 
     const evidence: Evidence[] = [
-      { key: 'engines_contributing', value: contributingEngines.length },
-      { key: 'supporting_items', value: input.supporting.length },
-      { key: 'contradicting_items', value: input.contradicting.length },
-      { key: 'rejected_alternatives', value: input.rejectedAlternatives.length },
-      { key: 'invalidation_conditions', value: input.invalidationConditions.length },
+      { key: "engines_contributing", value: contributingEngines.length },
+      { key: "supporting_items", value: input.supporting.length },
+      { key: "contradicting_items", value: input.contradicting.length },
+      { key: "rejected_alternatives", value: input.rejectedAlternatives.length },
+      { key: "invalidation_conditions", value: input.invalidationConditions.length },
     ];
 
-    const degraded = input.engines.filter((e) => e.status === 'failed' || e.status === 'insufficient_data');
+    const degraded = input.engines.filter(
+      (e) => e.status === "failed" || e.status === "insufficient_data",
+    );
 
     return {
-      status: contributingEngines.length === 0 ? 'insufficient_data' : degraded.length > 0 ? 'degraded' : 'ok',
+      status:
+        contributingEngines.length === 0
+          ? "insufficient_data"
+          : degraded.length > 0
+            ? "degraded"
+            : "ok",
       result: explanation,
-      confidence: contributingEngines.length === 0 ? 0 : 1 - degraded.length / contributingEngines.length,
+      confidence:
+        contributingEngines.length === 0 ? 0 : 1 - degraded.length / contributingEngines.length,
       evidence,
       warnings: degraded.map((e) => `${e.engine_name} did not contribute (${e.status})`),
     };

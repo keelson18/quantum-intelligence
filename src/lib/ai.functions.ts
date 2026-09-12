@@ -49,15 +49,15 @@ export const retrainML = createServerFn({ method: "POST" })
 export const getNews = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { refreshNews } = await import("./news.server");
-  try {
-    return await refreshNews(supabaseAdmin as never);
-  } catch (err) {
-    console.error("[news] refresh failed", err);
-    return { news: [], cached: false };
-  }
-});
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { refreshNews } = await import("./news.server");
+    try {
+      return await refreshNews(supabaseAdmin as never);
+    } catch (err) {
+      console.error("[news] refresh failed", err);
+      return { news: [], cached: false };
+    }
+  });
 
 const coachInput = z.object({
   messages: z

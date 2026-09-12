@@ -1,36 +1,36 @@
-import { useState } from 'react';
-import { useAuth, type SignUpData } from '../context/AuthContext';
-import { Activity, Loader2 } from 'lucide-react';
+import { useState } from "react";
+import { useAuth, type SignUpData } from "../context/AuthContext";
+import { Activity, Loader2 } from "lucide-react";
 
 export default function AuthScreen() {
   const { signIn, signUp } = useAuth();
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
 
   // Shared fields
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   // Sign-up-only fields
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const switchMode = (next: 'signin' | 'signup') => {
+  const switchMode = (next: "signin" | "signup") => {
     setMode(next);
     setError(null);
   };
 
   const validateSignUp = (): string | null => {
-    if (!firstName.trim()) return 'First name is required';
-    if (!lastName.trim()) return 'Last name is required';
-    if (!phone.trim()) return 'Phone number is required';
-    if (!email.trim()) return 'Email is required';
-    if (password.length < 6) return 'Password must be at least 6 characters';
-    if (password !== confirmPassword) return 'Passwords do not match';
+    if (!firstName.trim()) return "First name is required";
+    if (!lastName.trim()) return "Last name is required";
+    if (!phone.trim()) return "Phone number is required";
+    if (!email.trim()) return "Email is required";
+    if (password.length < 6) return "Password must be at least 6 characters";
+    if (password !== confirmPassword) return "Passwords do not match";
     return null;
   };
 
@@ -38,7 +38,7 @@ export default function AuthScreen() {
     e.preventDefault();
     setError(null);
 
-    if (mode === 'signup') {
+    if (mode === "signup") {
       const validationError = validateSignUp();
       if (validationError) {
         setError(validationError);
@@ -48,7 +48,7 @@ export default function AuthScreen() {
 
     setLoading(true);
 
-    if (mode === 'signin') {
+    if (mode === "signin") {
       const { error } = await signIn(email.trim(), password);
       if (error) setError(error);
     } else {
@@ -80,7 +80,7 @@ export default function AuthScreen() {
         </div>
 
         <form onSubmit={submit} className="space-y-4">
-          {mode === 'signup' && (
+          {mode === "signup" && (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-muted mb-1.5">First Name</label>
@@ -107,7 +107,7 @@ export default function AuthScreen() {
             </div>
           )}
 
-          {mode === 'signup' && (
+          {mode === "signup" && (
             <div>
               <label className="block text-xs text-muted mb-1.5">Phone Number</label>
               <input
@@ -146,7 +146,7 @@ export default function AuthScreen() {
             />
           </div>
 
-          {mode === 'signup' && (
+          {mode === "signup" && (
             <div>
               <label className="block text-xs text-muted mb-1.5">Confirm Password</label>
               <input
@@ -156,8 +156,8 @@ export default function AuthScreen() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className={`w-full px-3 py-2.5 rounded-lg bg-surface border text-text placeholder:text-muted/60 focus:outline-none transition-colors ${
                   confirmPassword && password !== confirmPassword
-                    ? 'border-danger focus:border-danger'
-                    : 'border-border focus:border-primary'
+                    ? "border-danger focus:border-danger"
+                    : "border-border focus:border-primary"
                 }`}
                 placeholder="••••••••"
               />
@@ -179,15 +179,17 @@ export default function AuthScreen() {
             className="w-full py-2.5 rounded-lg bg-primary text-black font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {loading ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
+            {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
           </button>
         </form>
 
         <button
-          onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}
+          onClick={() => switchMode(mode === "signin" ? "signup" : "signin")}
           className="w-full mt-4 text-sm text-muted hover:text-text transition-colors"
         >
-          {mode === 'signin' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+          {mode === "signin"
+            ? "Don't have an account? Sign up"
+            : "Already have an account? Sign in"}
         </button>
       </div>
     </div>

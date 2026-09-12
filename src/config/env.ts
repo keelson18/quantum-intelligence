@@ -13,16 +13,16 @@ function required(key: string, fallback: string): string {
 export const APP_CONFIG = {
   marketData: {
     /** Binance REST base, e.g. https://api.binance.com */
-    restUrl: required('VITE_MARKET_REST_URL', 'https://api.binance.com'),
+    restUrl: required("VITE_MARKET_REST_URL", "https://api.binance.com"),
     /** Binance combined-stream websocket, e.g. wss://stream.binance.com:9443/ws */
-    wsUrl: required('VITE_MARKET_WS_URL', 'wss://stream.binance.com:9443/ws'),
+    wsUrl: required("VITE_MARKET_WS_URL", "wss://stream.binance.com:9443/ws"),
     /** Default number of candles requested per history load. */
-    historyLimit: Number(required('VITE_MARKET_HISTORY_LIMIT', '1000')),
+    historyLimit: Number(required("VITE_MARKET_HISTORY_LIMIT", "1000")),
   },
   paperTrading: {
     /** Taker fee per leg, as a fraction of notional (0.001 = 10 bps). */
-    feeRate: Number(required('VITE_PAPER_FEE_RATE', '0.001')),
+    feeRate: Number(required("VITE_PAPER_FEE_RATE", "0.001")),
     /** Assumed adverse slippage on spread-crossing fills, as a fraction. */
-    slippageRate: Number(required('VITE_PAPER_SLIPPAGE_RATE', '0.0005')),
+    slippageRate: Number(required("VITE_PAPER_SLIPPAGE_RATE", "0.0005")),
   },
 } as const;

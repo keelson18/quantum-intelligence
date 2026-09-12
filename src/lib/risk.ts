@@ -1,5 +1,5 @@
-import type { Candle, Recommendation, RiskAssessment, Side } from './types';
-import { atr, correlation } from './indicators';
+import type { Candle, Recommendation, RiskAssessment, Side } from "./types";
+import { atr, correlation } from "./indicators";
 
 // ============================================================================
 // Risk Management Suite
@@ -8,14 +8,14 @@ import { atr, correlation } from './indicators';
 // ============================================================================
 
 export interface PortfolioState {
-  equity: number;           // current account equity (paper trading)
+  equity: number; // current account equity (paper trading)
   startingEquity: number;
-  dailyLossUsed: number;    // $ lost today
-  maxDailyLossPct: number;  // e.g. 0.03 = 3%
-  maxDrawdownPct: number;   // e.g. 0.20 = 20%
+  dailyLossUsed: number; // $ lost today
+  maxDailyLossPct: number; // e.g. 0.03 = 3%
+  maxDrawdownPct: number; // e.g. 0.20 = 20%
   peakEquity: number;
   currentExposurePct: number; // % of equity currently deployed
-  maxExposurePct: number;     // max allowed
+  maxExposurePct: number; // max allowed
   openPositions: { symbol: string; value: number; side: Side }[];
 }
 
@@ -24,10 +24,10 @@ export const DEFAULT_PORTFOLIO: PortfolioState = {
   startingEquity: 100000,
   dailyLossUsed: 0,
   maxDailyLossPct: 0.03,
-  maxDrawdownPct: 0.20,
+  maxDrawdownPct: 0.2,
   peakEquity: 100000,
   currentExposurePct: 0,
-  maxExposurePct: 0.40,
+  maxExposurePct: 0.4,
   openPositions: [],
 };
 
@@ -48,11 +48,12 @@ export function assessRisk(
   portfolio: PortfolioState,
   correlations?: { symbol: string; series: number[] }[],
 ): RiskAssessment | null {
-  if (candles.length < 20 || side === 'neutral') return null;
+  if (candles.length < 20 || side === "neutral") return null;
   const a = atr(candles, 14);
-  const atrVal = a[a.length - 1] || (candles[candles.length - 1].high - candles[candles.length - 1].low);
+  const atrVal =
+    a[a.length - 1] || candles[candles.length - 1].high - candles[candles.length - 1].low;
   const entry = candles[candles.length - 1].close;
-  const dir = side === 'buy' ? 1 : -1;
+  const dir = side === "buy" ? 1 : -1;
 
   // Volatility-adjusted stop: 1.5×ATR. Take profit at 2:1 reward.
   const stopLoss = entry - dir * atrVal * 1.5;
@@ -79,18 +80,20 @@ export function assessRisk(
     cappedValue = (cappedRisk / riskPerUnit) * entry;
   }
   if (remainingDailyLoss <= 0) {
-    cappedRisk = 0; cappedValue = 0;
+    cappedRisk = 0;
+    cappedValue = 0;
   }
 
   // Drawdown check: if we're near the max drawdown limit, refuse new risk.
   const drawdown = (portfolio.peakEquity - portfolio.equity) / portfolio.peakEquity;
   const maxDrawdown = portfolio.equity * portfolio.maxDrawdownPct;
   if (drawdown >= portfolio.maxDrawdownPct) {
-    cappedRisk = 0; cappedValue = 0;
+    cappedRisk = 0;
+    cappedValue = 0;
   }
 
   // Exposure check: don't exceed max portfolio exposure.
-  const newExposure = portfolio.currentExposurePct + (cappedValue / portfolio.equity);
+  const newExposure = portfolio.currentExposurePct + cappedValue / portfolio.equity;
   if (newExposure > portfolio.maxExposurePct) {
     const room = portfolio.maxExposurePct - portfolio.currentExposurePct;
     cappedValue = Math.max(0, room * portfolio.equity);
@@ -110,7 +113,16 @@ export function assessRisk(
     }
   }
 
-  const reasoning = buildRiskReasoning(side, confidence, atrVal, riskReward, kelly, cappedValue, drawdown, portfolio);
+  const reasoning = buildRiskReasoning(
+    side,
+    confidence,
+    atrVal,
+    riskReward,
+    kelly,
+    cappedValue,
+    drawdown,
+    portfolio,
+  );
 
   return {
     kellyFraction: kelly,
@@ -124,25 +136,43 @@ export function assessRisk(
     riskReward,
     maxDailyLoss,
     maxDrawdown,
-    portfolioExposure: portfolio.currentExposurePct + (cappedValue / portfolio.equity),
+    portfolioExposure: portfolio.currentExposurePct + cappedValue / portfolio.equity,
     correlationWarning,
     reasoning,
   };
 }
 
 function buildRiskReasoning(
-  side: Side, confidence: number, atrVal: number, rr: number, kelly: number,
-  positionValue: number, drawdown: number, portfolio: PortfolioState,
+  side: Side,
+  confidence: number,
+  atrVal: number,
+  rr: number,
+  kelly: number,
+  positionValue: number,
+  drawdown: number,
+  portfolio: PortfolioState,
 ): string {
   const parts: string[] = [];
-  parts.push(`${side === 'buy' ? 'Long' : 'Short'} position with ${(confidence * 100).toFixed(0)}% confidence.`);
+  parts.push(
+    `${side === "buy" ? "Long" : "Short"} position with ${(confidence * 100).toFixed(0)}% confidence.`,
+  );
   parts.push(`Stop placed at 1.5×ATR (${atrVal.toFixed(2)}) for volatility-adjusted risk.`);
   parts.push(`Take profit at 2:1 reward (${rr.toFixed(2)}).`);
-  parts.push(`Kelly fraction: ${(kelly * 100).toFixed(1)}% of equity → position value $${positionValue.toFixed(0)}.`);
-  if (drawdown > 0.1) parts.push(`Warning: current drawdown ${(drawdown * 100).toFixed(1)}% approaching ${(portfolio.maxDrawdownPct * 100).toFixed(0)}% limit.`);
-  if (portfolio.dailyLossUsed > 0) parts.push(`Daily loss budget: $${portfolio.dailyLossUsed.toFixed(0)} used of $${(portfolio.equity * portfolio.maxDailyLossPct).toFixed(0)}.`);
-  parts.push(`Portfolio exposure after trade: ${((portfolio.currentExposurePct + positionValue / portfolio.equity) * 100).toFixed(1)}% (max ${(portfolio.maxExposurePct * 100).toFixed(0)}%).`);
-  return parts.join(' ');
+  parts.push(
+    `Kelly fraction: ${(kelly * 100).toFixed(1)}% of equity → position value $${positionValue.toFixed(0)}.`,
+  );
+  if (drawdown > 0.1)
+    parts.push(
+      `Warning: current drawdown ${(drawdown * 100).toFixed(1)}% approaching ${(portfolio.maxDrawdownPct * 100).toFixed(0)}% limit.`,
+    );
+  if (portfolio.dailyLossUsed > 0)
+    parts.push(
+      `Daily loss budget: $${portfolio.dailyLossUsed.toFixed(0)} used of $${(portfolio.equity * portfolio.maxDailyLossPct).toFixed(0)}.`,
+    );
+  parts.push(
+    `Portfolio exposure after trade: ${((portfolio.currentExposurePct + positionValue / portfolio.equity) * 100).toFixed(1)}% (max ${(portfolio.maxExposurePct * 100).toFixed(0)}%).`,
+  );
+  return parts.join(" ");
 }
 
 // Attach a risk assessment to a recommendation.

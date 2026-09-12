@@ -5,13 +5,13 @@
 // confidence. All tensor memory is properly disposed to avoid leaks.
 // ============================================================================
 
-import * as tf from '@tensorflow/tfjs';
-import { loadModelWeights } from './modelStorage';
-import { computeIndicators } from '../lib/indicators';
-import { analyzeMarketStructure, analyzeSmartMoney } from '../lib/structure';
-import { FEATURE_NAMES } from './dataLoader';
-import type { Candle } from '../lib/types';
-import type { InferenceResult, Hyperparams, Architecture } from './types';
+import * as tf from "@tensorflow/tfjs";
+import { loadModelWeights } from "./modelStorage";
+import { computeIndicators } from "../lib/indicators";
+import { analyzeMarketStructure, analyzeSmartMoney } from "../lib/structure";
+import { FEATURE_NAMES } from "./dataLoader";
+import type { Candle } from "../lib/types";
+import type { InferenceResult, Hyperparams, Architecture } from "./types";
 
 interface LoadedModel {
   model: tf.LayersModel;
@@ -29,7 +29,7 @@ async function ensureTFReady(): Promise<void> {
   if (tfReady) return;
   await tf.ready();
   tfReady = true;
-  console.log('[inference] TF.js backend ready:', tf.getBackend());
+  console.log("[inference] TF.js backend ready:", tf.getBackend());
 }
 
 // Load a model + its normalization stats. Caches in memory for repeated inference.
@@ -50,7 +50,10 @@ export async function loadModel(
     return null;
   }
   modelCache.set(modelId, { model, mean, std, hyperparams, architecture });
-  console.log(`[inference] Model ${modelId} loaded (${architecture}), input shape:`, model.inputs?.[0]?.shape);
+  console.log(
+    `[inference] Model ${modelId} loaded (${architecture}), input shape:`,
+    model.inputs?.[0]?.shape,
+  );
   return model;
 }
 
@@ -66,7 +69,7 @@ export async function predictFromCandles(
   architecture: Architecture,
 ): Promise<InferenceResult | null> {
   if (candles.length < 220) {
-    console.warn('[inference] Not enough candles for prediction:', candles.length);
+    console.warn("[inference] Not enough candles for prediction:", candles.length);
     return null;
   }
 
@@ -74,7 +77,8 @@ export async function predictFromCandles(
   const model = await loadModel(modelId, mean, std, hyperparams, architecture);
   if (!model) return null;
 
-  const isSequence = (architecture === 'lstm' || architecture === 'transformer') && hyperparams.sequenceLength > 0;
+  const isSequence =
+    (architecture === "lstm" || architecture === "transformer") && hyperparams.sequenceLength > 0;
 
   try {
     if (isSequence) {
@@ -91,7 +95,7 @@ export async function predictFromCandles(
       return runPrediction(model, normalized, false, hyperparams);
     }
   } catch (err) {
-    console.error('[inference] Prediction failed:', err);
+    console.error("[inference] Prediction failed:", err);
     throw err;
   }
 }
@@ -100,7 +104,7 @@ export async function predictFromCandles(
 function normalizeVector(features: number[], mean: number[], std: number[]): number[] {
   if (mean.length === 0 || std.length === 0) {
     // No stats available — return as-is (better than crashing).
-    console.warn('[inference] No normalization stats — using raw features');
+    console.warn("[inference] No normalization stats — using raw features");
     return features;
   }
   return features.map((v, j) => (v - (mean[j] ?? 0)) / (std[j] ?? 1));
@@ -117,10 +121,15 @@ function buildFeatureVector(candles: Candle[]): number[] {
   const obvSlope = (ind.obv[i] - ind.obv[Math.max(0, i - 10)]) / (Math.abs(ind.obv[i]) || 1);
   const sh = Math.max(...candles.slice(Math.max(0, i - 20), i + 1).map((c) => c.high));
   const sl = Math.min(...candles.slice(Math.max(0, i - 20), i + 1).map((c) => c.low));
-  const regimeScore = structure.regime === 'trend_up' ? 1 : structure.regime === 'trend_down' ? -1 : 0;
+  const regimeScore =
+    structure.regime === "trend_up" ? 1 : structure.regime === "trend_down" ? -1 : 0;
   const ret = (p: number) => closes[i] / closes[i - p] - 1;
   return [
-    ret(1), ret(3), ret(5), ret(10), ret(20),
+    ret(1),
+    ret(3),
+    ret(5),
+    ret(10),
+    ret(20),
     ind.rsi[i] / 100,
     ind.macd.hist[i] / closes[i],
     ind.ema[20][i] / closes[i] - 1,
@@ -152,21 +161,34 @@ function buildFeatureVectorsBatch(candles: Candle[], seqLen: number): number[][]
     const start = Math.max(0, i - 19);
     return vols.slice(start, i + 1).reduce((a, b) => a + b, 0) / (i - start + 1) || 1;
   };
-  const obvSlope = (i: number) => (ind.obv[i] - ind.obv[Math.max(0, i - 10)]) / (Math.abs(ind.obv[i]) || 1);
-  const swingHigh = (i: number, lb = 20) => Math.max(...candles.slice(Math.max(0, i - lb), i + 1).map((c) => c.high));
-  const swingLow = (i: number, lb = 20) => Math.min(...candles.slice(Math.max(0, i - lb), i + 1).map((c) => c.low));
-  const regimeScore = structure.regime === 'trend_up' ? 1 : structure.regime === 'trend_down' ? -1 : 0;
-  const inPremium = (i: number) => closes[i] > smc.premiumDiscount.midpoint ? 1 : 0;
-  const nearOB = (i: number) => smc.orderBlocks.some((ob) => Math.abs(closes[i] - (ob.high + ob.low) / 2) / closes[i] < 0.01) ? 1 : 0;
-  const nearFVG = (i: number) => smc.fairValueGaps.some((fvg) => closes[i] >= fvg.bottom && closes[i] <= fvg.top) ? 1 : 0;
+  const obvSlope = (i: number) =>
+    (ind.obv[i] - ind.obv[Math.max(0, i - 10)]) / (Math.abs(ind.obv[i]) || 1);
+  const swingHigh = (i: number, lb = 20) =>
+    Math.max(...candles.slice(Math.max(0, i - lb), i + 1).map((c) => c.high));
+  const swingLow = (i: number, lb = 20) =>
+    Math.min(...candles.slice(Math.max(0, i - lb), i + 1).map((c) => c.low));
+  const regimeScore =
+    structure.regime === "trend_up" ? 1 : structure.regime === "trend_down" ? -1 : 0;
+  const inPremium = (i: number) => (closes[i] > smc.premiumDiscount.midpoint ? 1 : 0);
+  const nearOB = (i: number) =>
+    smc.orderBlocks.some((ob) => Math.abs(closes[i] - (ob.high + ob.low) / 2) / closes[i] < 0.01)
+      ? 1
+      : 0;
+  const nearFVG = (i: number) =>
+    smc.fairValueGaps.some((fvg) => closes[i] >= fvg.bottom && closes[i] <= fvg.top) ? 1 : 0;
 
   const result: number[][] = [];
   for (let step = Math.max(200, candles.length - seqLen); step < candles.length; step++) {
     const i = step;
     const ret = (p: number) => closes[i] / closes[i - p] - 1;
-    const sh = swingHigh(i), sl = swingLow(i);
+    const sh = swingHigh(i),
+      sl = swingLow(i);
     result.push([
-      ret(1), ret(3), ret(5), ret(10), ret(20),
+      ret(1),
+      ret(3),
+      ret(5),
+      ret(10),
+      ret(20),
       ind.rsi[i] / 100,
       ind.macd.hist[i] / closes[i],
       ind.ema[20][i] / closes[i] - 1,
@@ -214,10 +236,10 @@ function runPrediction(
   const outputs = Array.from(outputTensor.dataSync());
   outputTensor.dispose();
 
-  if (hp.taskType === 'classification') {
+  if (hp.taskType === "classification") {
     const prediction = outputs.indexOf(Math.max(...outputs));
     const confidence = outputs[prediction];
-    const labels = ['down', 'flat', 'up'];
+    const labels = ["down", "flat", "up"];
     return {
       prediction,
       confidence,
@@ -239,7 +261,10 @@ function runPrediction(
 export function clearModelCache(modelId?: string): void {
   if (modelId) {
     const cached = modelCache.get(modelId);
-    if (cached) { cached.model.dispose(); modelCache.delete(modelId); }
+    if (cached) {
+      cached.model.dispose();
+      modelCache.delete(modelId);
+    }
   } else {
     for (const { model } of modelCache.values()) model.dispose();
     modelCache.clear();

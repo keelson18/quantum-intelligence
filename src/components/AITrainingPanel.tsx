@@ -1,20 +1,34 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
-  Brain, Play, Square, Trash2, ChevronDown, ChevronRight,
-  CheckCircle2, XCircle, Loader2, Layers, Cpu, Database,
-} from 'lucide-react';
+  Brain,
+  Play,
+  Square,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Layers,
+  Cpu,
+  Database,
+} from "lucide-react";
 import type {
-  AIModelMeta, Architecture, Hyperparams, EpochMetrics, InferenceResult,
-} from '../ai/types';
-import { DEFAULT_HYPERPARAMS } from '../ai/types';
-import { prepareDataset } from '../ai/dataLoader';
-import { trainWithWorker, trainOnMainThread } from '../ai/trainer';
-import { fetchModelMetas, deleteModel } from '../ai/modelStorage';
-import { predictFromCandles, clearModelCache } from '../ai/inference';
-import { saveTrainingSamples } from '../ai/dataLoader';
-import type { Candle, Timeframe } from '../lib/types';
-import ModelMetrics from './ModelMetrics';
-import PredictionDisplay from './PredictionDisplay';
+  AIModelMeta,
+  Architecture,
+  Hyperparams,
+  EpochMetrics,
+  InferenceResult,
+} from "../ai/types";
+import { DEFAULT_HYPERPARAMS } from "../ai/types";
+import { prepareDataset } from "../ai/dataLoader";
+import { trainWithWorker, trainOnMainThread } from "../ai/trainer";
+import { fetchModelMetas, deleteModel } from "../ai/modelStorage";
+import { predictFromCandles, clearModelCache } from "../ai/inference";
+import { saveTrainingSamples } from "../ai/dataLoader";
+import type { Candle, Timeframe } from "../lib/types";
+import ModelMetrics from "./ModelMetrics";
+import PredictionDisplay from "./PredictionDisplay";
 
 interface Props {
   symbol: string;
@@ -22,7 +36,7 @@ interface Props {
   candles: Candle[];
 }
 
-type TrainStatus = 'idle' | 'preparing' | 'training' | 'saving' | 'done' | 'error' | 'cancelled';
+type TrainStatus = "idle" | "preparing" | "training" | "saving" | "done" | "error" | "cancelled";
 
 // AITrainingPanel — full training control UI.
 // Lets the user configure hyperparameters, pick an architecture, train a model
@@ -31,11 +45,11 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
   const [models, setModels] = useState<AIModelMeta[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const [hp, setHp] = useState<Hyperparams>(DEFAULT_HYPERPARAMS);
-  const [arch, setArch] = useState<Architecture>('dense');
+  const [arch, setArch] = useState<Architecture>("dense");
   const [modelName, setModelName] = useState(`${symbol}-model`);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [epochs, setEpochs] = useState<EpochMetrics[]>([]);
-  const [status, setStatus] = useState<TrainStatus>('idle');
+  const [status, setStatus] = useState<TrainStatus>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [dataCount, setDataCount] = useState<number | null>(null);
   const [inference, setInference] = useState<InferenceResult | null>(null);
@@ -50,8 +64,12 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
     if (metas.length > 0 && !selectedModelId) setSelectedModelId(metas[0].id);
   }, [selectedModelId]);
 
-  useEffect(() => { loadModels(); }, [loadModels]);
-  useEffect(() => { setModelName(`${symbol}-model`); }, [symbol]);
+  useEffect(() => {
+    loadModels();
+  }, [loadModels]);
+  useEffect(() => {
+    setModelName(`${symbol}-model`);
+  }, [symbol]);
 
   const selectedModel = models.find((m) => m.id === selectedModelId) ?? null;
 
@@ -61,7 +79,7 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
   }, [symbol, arch]);
 
   const handleTrain = async () => {
-    setStatus('preparing');
+    setStatus("preparing");
     setEpochs([]);
     setErrorMsg(null);
     setInference(null);
@@ -72,43 +90,57 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
       setDataCount(dataset.xTrain.length + dataset.xVal.length);
 
       // Save the generated samples to Supabase for future online learning.
-      await saveTrainingSamples(symbol, dataset.xTrain.map((features, i) => ({
-        features, label: dataset.yTrain[i],
-      })));
+      await saveTrainingSamples(
+        symbol,
+        dataset.xTrain.map((features, i) => ({
+          features,
+          label: dataset.yTrain[i],
+        })),
+      );
 
-      setStatus('training');
+      setStatus("training");
 
       // Step 2: train in a Web Worker (falls back to main thread if needed).
       const callbacks = {
         onEpoch: (m: EpochMetrics) => setEpochs((prev) => [...prev, m]),
         onStatus: (s: string) => setStatus(s as TrainStatus),
-        onError: (msg: string) => { setErrorMsg(msg); setStatus('error'); },
+        onError: (msg: string) => {
+          setErrorMsg(msg);
+          setStatus("error");
+        },
       };
 
       try {
-        const { result, modelId, cancel } = await trainWithWorker(dataset, arch, hp, modelName, callbacks);
+        const { result, modelId, cancel } = await trainWithWorker(
+          dataset,
+          arch,
+          hp,
+          modelName,
+          callbacks,
+        );
         cancelRef.current = cancel;
-        void result; void modelId;
+        void result;
+        void modelId;
       } catch {
         // Fallback to main-thread training if the worker fails.
-        setStatus('training');
+        setStatus("training");
         await trainOnMainThread(dataset, arch, hp, modelName, callbacks);
       }
 
-      setStatus('done');
+      setStatus("done");
       await loadModels();
       // Auto-run inference with the freshly trained model so predictions show immediately.
       // The model list reload picks up the new model; we trigger inference on next render.
       setTimeout(() => autoInfer(), 100);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : String(err));
-      setStatus('error');
+      setStatus("error");
     }
   };
 
   const handleCancel = () => {
     cancelRef.current?.();
-    setStatus('cancelled');
+    setStatus("cancelled");
   };
 
   const handleDelete = async (modelId: string) => {
@@ -135,14 +167,14 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
         selectedModel.architecture,
       );
       if (!result) {
-        setInferError('Model not ready or insufficient data. Try retraining.');
+        setInferError("Model not ready or insufficient data. Try retraining.");
       } else {
         setInference(result);
         setInferError(null);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error('[AI inference error]', msg);
+      console.error("[AI inference error]", msg);
       setInferError(msg);
     } finally {
       setInferLoading(false);
@@ -152,7 +184,7 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
   // Auto-infer: finds the most recently trained model and runs prediction.
   const autoInfer = async () => {
     const metas = await fetchModelMetas();
-    const trained = metas.find((m) => m.status === 'trained');
+    const trained = metas.find((m) => m.status === "trained");
     if (!trained || candles.length < 220) return;
     setSelectedModelId(trained.id);
     setInferLoading(true);
@@ -161,19 +193,22 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
       const mean = trained.metrics?.mean ?? [];
       const std = trained.metrics?.std ?? [];
       const result = await predictFromCandles(
-        trained.id, candles, mean, std,
+        trained.id,
+        candles,
+        mean,
+        std,
         trained.hyperparams ?? DEFAULT_HYPERPARAMS,
         trained.architecture,
       );
       if (result) setInference(result);
     } catch (err) {
-      console.error('[AI auto-inference error]', err);
+      console.error("[AI auto-inference error]", err);
     } finally {
       setInferLoading(false);
     }
   };
 
-  const isTraining = status === 'preparing' || status === 'training' || status === 'saving';
+  const isTraining = status === "preparing" || status === "training" || status === "saving";
 
   return (
     <div className="bg-surface border border-border rounded-xl p-4">
@@ -215,12 +250,34 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
 
       {/* Basic hyperparameters */}
       <div className="grid grid-cols-3 gap-3 mb-3">
-        <HyperInput label="Epochs" value={hp.epochs} min={5} max={200} step={5}
-          onChange={(v) => setHp({ ...hp, epochs: v })} disabled={isTraining} />
-        <HyperInput label="Batch Size" value={hp.batchSize} min={8} max={128} step={8}
-          onChange={(v) => setHp({ ...hp, batchSize: v })} disabled={isTraining} />
-        <HyperInput label="Learning Rate" value={hp.learningRate} min={0.0001} max={0.1} step={0.0001} decimals={4}
-          onChange={(v) => setHp({ ...hp, learningRate: v })} disabled={isTraining} />
+        <HyperInput
+          label="Epochs"
+          value={hp.epochs}
+          min={5}
+          max={200}
+          step={5}
+          onChange={(v) => setHp({ ...hp, epochs: v })}
+          disabled={isTraining}
+        />
+        <HyperInput
+          label="Batch Size"
+          value={hp.batchSize}
+          min={8}
+          max={128}
+          step={8}
+          onChange={(v) => setHp({ ...hp, batchSize: v })}
+          disabled={isTraining}
+        />
+        <HyperInput
+          label="Learning Rate"
+          value={hp.learningRate}
+          min={0.0001}
+          max={0.1}
+          step={0.0001}
+          decimals={4}
+          onChange={(v) => setHp({ ...hp, learningRate: v })}
+          disabled={isTraining}
+        />
       </div>
 
       {/* Advanced settings */}
@@ -233,17 +290,47 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
       </button>
       {showAdvanced && (
         <div className="grid grid-cols-3 gap-3 mb-3 animate-fade-in">
-          <HyperInput label="Validation Split" value={hp.validationSplit} min={0.1} max={0.5} step={0.05} decimals={2}
-            onChange={(v) => setHp({ ...hp, validationSplit: v })} disabled={isTraining} />
-          <HyperInput label="Dropout" value={hp.dropout} min={0} max={0.5} step={0.05} decimals={2}
-            onChange={(v) => setHp({ ...hp, dropout: v })} disabled={isTraining} />
-          <HyperInput label="Seq Length" value={hp.sequenceLength} min={5} max={60} step={5}
-            onChange={(v) => setHp({ ...hp, sequenceLength: v })} disabled={isTraining} />
+          <HyperInput
+            label="Validation Split"
+            value={hp.validationSplit}
+            min={0.1}
+            max={0.5}
+            step={0.05}
+            decimals={2}
+            onChange={(v) => setHp({ ...hp, validationSplit: v })}
+            disabled={isTraining}
+          />
+          <HyperInput
+            label="Dropout"
+            value={hp.dropout}
+            min={0}
+            max={0.5}
+            step={0.05}
+            decimals={2}
+            onChange={(v) => setHp({ ...hp, dropout: v })}
+            disabled={isTraining}
+          />
+          <HyperInput
+            label="Seq Length"
+            value={hp.sequenceLength}
+            min={5}
+            max={60}
+            step={5}
+            onChange={(v) => setHp({ ...hp, sequenceLength: v })}
+            disabled={isTraining}
+          />
           <div className="col-span-3">
-            <label className="block text-xs text-muted mb-1">Hidden Layers (comma-separated units)</label>
+            <label className="block text-xs text-muted mb-1">
+              Hidden Layers (comma-separated units)
+            </label>
             <input
-              value={hp.hiddenUnits.join(', ')}
-              onChange={(e) => setHp({ ...hp, hiddenUnits: e.target.value.split(',').map((s) => parseInt(s.trim()) || 32) })}
+              value={hp.hiddenUnits.join(", ")}
+              onChange={(e) =>
+                setHp({
+                  ...hp,
+                  hiddenUnits: e.target.value.split(",").map((s) => parseInt(s.trim()) || 32),
+                })
+              }
               disabled={isTraining}
               className="w-full px-2.5 py-2 rounded-lg bg-bg border border-border text-text focus:outline-none focus:border-primary text-sm"
             />
@@ -276,12 +363,22 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
         )}
 
         {/* Status indicator */}
-        {status === 'preparing' && <StatusBadge icon={Loader2} text="Preparing data…" spin />}
-        {status === 'training' && <StatusBadge icon={Loader2} text={`Training (epoch ${epochs.length}/${hp.epochs})`} spin />}
-        {status === 'saving' && <StatusBadge icon={Loader2} text="Saving model…" spin />}
-        {status === 'done' && <StatusBadge icon={CheckCircle2} text="Training complete" color="text-success" />}
-        {status === 'error' && <StatusBadge icon={XCircle} text="Failed" color="text-danger" />}
-        {status === 'cancelled' && <StatusBadge icon={Square} text="Cancelled" color="text-muted" />}
+        {status === "preparing" && <StatusBadge icon={Loader2} text="Preparing data…" spin />}
+        {status === "training" && (
+          <StatusBadge
+            icon={Loader2}
+            text={`Training (epoch ${epochs.length}/${hp.epochs})`}
+            spin
+          />
+        )}
+        {status === "saving" && <StatusBadge icon={Loader2} text="Saving model…" spin />}
+        {status === "done" && (
+          <StatusBadge icon={CheckCircle2} text="Training complete" color="text-success" />
+        )}
+        {status === "error" && <StatusBadge icon={XCircle} text="Failed" color="text-danger" />}
+        {status === "cancelled" && (
+          <StatusBadge icon={Square} text="Cancelled" color="text-muted" />
+        )}
       </div>
 
       {/* Error */}
@@ -302,12 +399,18 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
       {epochs.length > 0 && (
         <div className="mb-4 pt-3 border-t border-border/50">
           <ModelMetrics metrics={epochs} />
-          {status === 'done' && epochs.length > 0 && (
+          {status === "done" && epochs.length > 0 && (
             <div className="grid grid-cols-4 gap-2 mt-3">
               <MetricBox label="Final Loss" value={epochs[epochs.length - 1].loss.toFixed(4)} />
               <MetricBox label="Val Loss" value={epochs[epochs.length - 1].valLoss.toFixed(4)} />
-              <MetricBox label="Accuracy" value={`${((epochs[epochs.length - 1].accuracy ?? 0) * 100).toFixed(1)}%`} />
-              <MetricBox label="Val Acc" value={`${((epochs[epochs.length - 1].valAccuracy ?? 0) * 100).toFixed(1)}%`} />
+              <MetricBox
+                label="Accuracy"
+                value={`${((epochs[epochs.length - 1].accuracy ?? 0) * 100).toFixed(1)}%`}
+              />
+              <MetricBox
+                label="Val Acc"
+                value={`${((epochs[epochs.length - 1].valAccuracy ?? 0) * 100).toFixed(1)}%`}
+              />
             </div>
           )}
         </div>
@@ -324,7 +427,9 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
               <div
                 key={m.id}
                 className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
-                  selectedModelId === m.id ? 'bg-primary/10 border border-primary/30' : 'bg-bg/50 border border-border/50 hover:border-border'
+                  selectedModelId === m.id
+                    ? "bg-primary/10 border border-primary/30"
+                    : "bg-bg/50 border border-border/50 hover:border-border"
                 }`}
                 onClick={() => setSelectedModelId(m.id)}
               >
@@ -332,11 +437,15 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
                   <div className="font-medium truncate">{m.name}</div>
                   <div className="text-muted">
                     {m.architecture} · {m.status}
-                    {m.metrics?.finalMetrics && ` · acc=${((m.metrics.finalMetrics.accuracy ?? 0) * 100).toFixed(0)}%`}
+                    {m.metrics?.finalMetrics &&
+                      ` · acc=${((m.metrics.finalMetrics.accuracy ?? 0) * 100).toFixed(0)}%`}
                   </div>
                 </div>
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleDelete(m.id); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(m.id);
+                  }}
                   className="p-1 rounded hover:bg-danger/15 text-muted hover:text-danger transition-colors"
                 >
                   <Trash2 className="w-3 h-3" />
@@ -348,7 +457,7 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
       )}
 
       {/* Inference section */}
-      {selectedModel && selectedModel.status === 'trained' && (
+      {selectedModel && selectedModel.status === "trained" && (
         <div className="pt-3 border-t border-border/50">
           <div className="flex items-center justify-between mb-3">
             <div className="text-xs font-medium">Run Inference</div>
@@ -357,7 +466,11 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
               disabled={inferLoading || candles.length < 220}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/15 text-primary text-xs font-medium hover:bg-primary/25 disabled:opacity-40 transition-colors"
             >
-              {inferLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+              {inferLoading ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Play className="w-3 h-3" />
+              )}
               Predict
             </button>
           </div>
@@ -366,7 +479,11 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
               {inferError}
             </div>
           )}
-          <PredictionDisplay result={inference} loading={inferLoading} modelName={selectedModel.name} />
+          <PredictionDisplay
+            result={inference}
+            loading={inferLoading}
+            modelName={selectedModel.name}
+          />
         </div>
       )}
     </div>
@@ -374,10 +491,23 @@ export default function AITrainingPanel({ symbol, timeframe, candles }: Props) {
 }
 
 function HyperInput({
-  label, value, min, max, step, decimals = 0, onChange, disabled,
+  label,
+  value,
+  min,
+  max,
+  step,
+  decimals = 0,
+  onChange,
+  disabled,
 }: {
-  label: string; value: number; min: number; max: number; step: number; decimals?: number;
-  onChange: (v: number) => void; disabled?: boolean;
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  decimals?: number;
+  onChange: (v: number) => void;
+  disabled?: boolean;
 }) {
   return (
     <div>
@@ -392,15 +522,27 @@ function HyperInput({
         onChange={(e) => onChange(parseFloat(e.target.value) || min)}
         className="w-full px-2.5 py-2 rounded-lg bg-bg border border-border text-text focus:outline-none focus:border-primary text-sm tabular-nums"
       />
-      {decimals > 0 && <div className="text-xs text-muted mt-0.5 tabular-nums">{value.toFixed(decimals)}</div>}
+      {decimals > 0 && (
+        <div className="text-xs text-muted mt-0.5 tabular-nums">{value.toFixed(decimals)}</div>
+      )}
     </div>
   );
 }
 
-function StatusBadge({ icon: Icon, text, color = 'text-muted', spin }: { icon: typeof Loader2; text: string; color?: string; spin?: boolean }) {
+function StatusBadge({
+  icon: Icon,
+  text,
+  color = "text-muted",
+  spin,
+}: {
+  icon: typeof Loader2;
+  text: string;
+  color?: string;
+  spin?: boolean;
+}) {
   return (
     <div className={`flex items-center gap-1.5 text-xs ${color}`}>
-      <Icon className={`w-3.5 h-3.5 ${spin ? 'animate-spin' : ''}`} /> {text}
+      <Icon className={`w-3.5 h-3.5 ${spin ? "animate-spin" : ""}`} /> {text}
     </div>
   );
 }

@@ -5,14 +5,14 @@
 // silently rewrites live behaviour — it emits proposals with sample sizes.
 // ============================================================================
 
-import { runEngine, type EngineResult, type Evidence } from './contract';
-import { ENGINE_REGISTRY } from './registry';
-import type { TradeReview, ClosedTradeInput } from './tradeReview';
+import { runEngine, type EngineResult, type Evidence } from "./contract";
+import { ENGINE_REGISTRY } from "./registry";
+import type { TradeReview, ClosedTradeInput } from "./tradeReview";
 
 const D = ENGINE_REGISTRY[17];
 
 export interface LearningProposal {
-  scope: 'strategy' | 'regime' | 'model' | 'risk';
+  scope: "strategy" | "regime" | "model" | "risk";
   key: string;
   observation: string;
   sampleSize: number;
@@ -36,7 +36,12 @@ export function learningEngine(
 ): EngineResult<LearningResult> {
   return runEngine<LearningResult>(D.id, D.version, contextId, () => {
     if (trades.length === 0) {
-      return { status: 'insufficient_data', result: null, confidence: 0, warnings: ['No outcome history to learn from'] };
+      return {
+        status: "insufficient_data",
+        result: null,
+        confidence: 0,
+        warnings: ["No outcome history to learn from"],
+      };
     }
 
     const byKey = (fn: (t: ClosedTradeInput) => string | null) => {
@@ -53,7 +58,11 @@ export function learningEngine(
     };
 
     const proposals: LearningProposal[] = [];
-    const push = (scope: LearningProposal['scope'], map: Map<string, { wins: number; total: number }>, label: string) => {
+    const push = (
+      scope: LearningProposal["scope"],
+      map: Map<string, { wins: number; total: number }>,
+      label: string,
+    ) => {
       for (const [key, s] of map) {
         const rate = s.wins / s.total;
         proposals.push({
@@ -67,15 +76,32 @@ export function learningEngine(
       }
     };
 
-    push('strategy', byKey((t) => t.strategy ?? null), 'Strategy');
-    push('regime', byKey((t) => t.regime ?? null), 'Regime');
-    push('model', byKey((t) => (t.modelAgreed == null ? null : t.modelAgreed ? 'model_agreed' : 'model_disagreed')), 'Model alignment');
+    push(
+      "strategy",
+      byKey((t) => t.strategy ?? null),
+      "Strategy",
+    );
+    push(
+      "regime",
+      byKey((t) => t.regime ?? null),
+      "Regime",
+    );
+    push(
+      "model",
+      byKey((t) =>
+        t.modelAgreed == null ? null : t.modelAgreed ? "model_agreed" : "model_disagreed",
+      ),
+      "Model alignment",
+    );
 
-    const failureCounts = reviews.reduce<Record<string, number>>((acc, r) => ({ ...acc, [r.failureClass]: (acc[r.failureClass] ?? 0) + 1 }), {});
+    const failureCounts = reviews.reduce<Record<string, number>>(
+      (acc, r) => ({ ...acc, [r.failureClass]: (acc[r.failureClass] ?? 0) + 1 }),
+      {},
+    );
     for (const [cls, count] of Object.entries(failureCounts)) {
-      if (cls === 'Correct Thesis') continue;
+      if (cls === "Correct Thesis") continue;
       proposals.push({
-        scope: 'risk',
+        scope: "risk",
         key: cls,
         observation: `${count} trade(s) classified as ${cls}`,
         sampleSize: count,
@@ -87,19 +113,26 @@ export function learningEngine(
     const wins = trades.filter((t) => t.pnl > 0).length;
     const overallWinRate = wins / trades.length;
     const evidence: Evidence[] = [
-      { key: 'sample_size', value: trades.length },
-      { key: 'overall_win_rate', value: Number(overallWinRate.toFixed(3)) },
-      ...proposals.slice(0, 20).map((p) => ({ key: `${p.scope}:${p.key}`, value: p.suggestedWeightDelta, note: p.observation })),
+      { key: "sample_size", value: trades.length },
+      { key: "overall_win_rate", value: Number(overallWinRate.toFixed(3)) },
+      ...proposals.slice(0, 20).map((p) => ({
+        key: `${p.scope}:${p.key}`,
+        value: p.suggestedWeightDelta,
+        note: p.observation,
+      })),
     ];
 
     return {
-      status: trades.length < MIN_SAMPLE ? 'degraded' : 'ok',
+      status: trades.length < MIN_SAMPLE ? "degraded" : "ok",
       result: { proposals, overallWinRate, sampleSize: trades.length, appliedAutomatically: false },
       confidence: Math.min(1, trades.length / 50),
       evidence,
-      warnings: trades.length < MIN_SAMPLE
-        ? [`Sample of ${trades.length} is below the ${MIN_SAMPLE}-trade validation floor — proposals are unvalidated`]
-        : ['Learning proposals are advisory; they never auto-modify risk limits'],
+      warnings:
+        trades.length < MIN_SAMPLE
+          ? [
+              `Sample of ${trades.length} is below the ${MIN_SAMPLE}-trade validation floor — proposals are unvalidated`,
+            ]
+          : ["Learning proposals are advisory; they never auto-modify risk limits"],
     };
   });
 }
