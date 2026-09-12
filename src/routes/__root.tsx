@@ -64,6 +64,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
+              if (configError) {
+                window.location.reload();
+                return;
+              }
               router.invalidate();
               reset();
             }}
