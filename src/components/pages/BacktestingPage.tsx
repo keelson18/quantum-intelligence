@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import BacktestPanel from '../components/BacktestPanel';
+import BacktestPanel from '@/components/BacktestPanel';
 import { BarChart3, Save, Check, Database } from 'lucide-react';
-import { fetchKlines } from '../lib/market';
-import { runBacktest, walkForward, monteCarlo, DEFAULT_BACKTEST } from '../lib/backtest';
-import { makeDecision } from '../lib/decision';
-import { listBacktestRuns, saveBacktestRun } from '../lib/data/backtests.repo';
-import { CRYPTO_INSTRUMENTS, type Candle, type Timeframe, type BacktestMetrics, type MonteCarloResult, type WalkForwardResult } from '../lib/types';
-import { useAuth } from '../context/AuthContext';
+import { fetchKlines } from '@/lib/market';
+import { runBacktest, walkForward, monteCarlo, DEFAULT_BACKTEST } from '@/lib/backtest';
+import { makeDecision } from '@/lib/decision';
+import { listBacktestRuns, saveBacktestRun } from '@/lib/data/backtests.repo';
+import { CRYPTO_INSTRUMENTS, type Candle, type Timeframe, type BacktestMetrics, type MonteCarloResult, type WalkForwardResult } from '@/lib/types';
+import { useAuth } from '@/context/AuthContext';
 
 const SYMBOLS = CRYPTO_INSTRUMENTS.filter((i) => i.live).slice(0, 6).map((i) => i.symbol);
 

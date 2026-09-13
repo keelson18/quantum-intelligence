@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Microscope, RefreshCw, Grid3x3, FileText, TrendingUp, Activity, Gauge } from 'lucide-react';
-import { fetchKlines } from '../lib/market';
-import { computeIndicators, correlation } from '../lib/indicators';
-import { analyzeMarketStructure } from '../lib/structure';
-import { detectAllPatterns } from '../lib/patterns';
-import { makeDecision } from '../lib/decision';
-import { CRYPTO_INSTRUMENTS, type Candle, type Timeframe, type Regime, type Side } from '../lib/types';
+import { fetchKlines } from '@/lib/market';
+import { computeIndicators, correlation } from '@/lib/indicators';
+import { analyzeMarketStructure } from '@/lib/structure';
+import { detectAllPatterns } from '@/lib/patterns';
+import { makeDecision } from '@/lib/decision';
+import { CRYPTO_INSTRUMENTS, type Candle, type Timeframe, type Regime, type Side } from '@/lib/types';
 import { Fragment } from 'react';
 
 const REGIME_LABELS: Record<Regime, string> = {

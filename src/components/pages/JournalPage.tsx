@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BookOpen, Search, Plus, X, TrendingUp, TrendingDown, Lightbulb, Tag } from 'lucide-react';
-import { listJournalEntries, createJournalEntry, updateJournalEntry, deleteJournalEntry } from '../lib/data/journal.repo';
-import { fetchTradeHistory, fetchTradeReviews, type PaperTrade } from '../lib/paperTrading';
-import type { TradeReviewRow } from '../lib/data/paper.repo';
-import { computePortfolioMetrics } from '../lib/portfolioEngine';
+import { listJournalEntries, createJournalEntry, updateJournalEntry, deleteJournalEntry } from '@/lib/data/journal.repo';
+import { fetchTradeHistory, fetchTradeReviews, type PaperTrade } from '@/lib/paperTrading';
+import type { TradeReviewRow } from '@/lib/data/paper.repo';
+import { computePortfolioMetrics } from '@/lib/portfolioEngine';
 
 interface JournalEntry {
   id: string;

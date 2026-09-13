@@ -3,9 +3,9 @@ import { Star, Plus, X, Search, GripVertical, Trash2 } from 'lucide-react';
 import {
   listWatchlists, createWatchlists, createWatchlist, deleteWatchlist,
   listWatchlistItems, addWatchlistItems, deleteWatchlistItem, swapWatchlistItemOrder,
-} from '../lib/data/watchlists.repo';
-import { subscribeLivePrice } from '../lib/market';
-import { CRYPTO_INSTRUMENTS, ALL_INSTRUMENTS } from '../lib/types';
+} from '@/lib/data/watchlists.repo';
+import { subscribeLivePrice } from '@/lib/market';
+import { CRYPTO_INSTRUMENTS, ALL_INSTRUMENTS } from '@/lib/types';
 
 interface Watchlist {
   id: string;

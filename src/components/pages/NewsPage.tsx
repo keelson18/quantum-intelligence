@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Newspaper, Search, TrendingUp, TrendingDown, Minus, ExternalLink, Clock, RefreshCw } from 'lucide-react';
-import { listCachedNews } from '../lib/data/news.repo';
-import { getNews } from '../lib/ai.functions';
+import { listCachedNews } from '@/lib/data/news.repo';
+import { getNews } from '@/lib/ai.functions';
 
 interface NewsItem {
   id: string;

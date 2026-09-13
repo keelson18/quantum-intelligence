@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Settings, Sun, Moon, Bell, Shield, User, Sliders, Save, Check } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
-import { useAuth } from '../context/AuthContext';
-import { useSettingsStore, type RiskTolerance } from '../store/settingsStore';
-import { getUserSettings, saveUserSettings } from '../lib/data/settings.repo';
-import type { UserRole, Timeframe } from '../lib/types';
+import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
+import { useSettingsStore, type RiskTolerance } from '@/store/settingsStore';
+import { getUserSettings, saveUserSettings } from '@/lib/data/settings.repo';
+import type { UserRole, Timeframe } from '@/lib/types';
 
 const ROLE_LABELS: Record<UserRole, string> = {
   user: 'User', trader: 'Trader', analyst: 'Analyst', admin: 'Admin', super_admin: 'Super Admin',
