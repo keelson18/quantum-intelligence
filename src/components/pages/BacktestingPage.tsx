@@ -1,25 +1,42 @@
-import { useState, useEffect, useCallback } from 'react';
-import BacktestPanel from '../components/BacktestPanel';
-import { BarChart3, Save, Check, Database } from 'lucide-react';
-import { fetchKlines } from '../lib/market';
-import { runBacktest, walkForward, monteCarlo, DEFAULT_BACKTEST } from '../lib/backtest';
-import { makeDecision } from '../lib/decision';
-import { listBacktestRuns, saveBacktestRun } from '../lib/data/backtests.repo';
-import { CRYPTO_INSTRUMENTS, type Candle, type Timeframe, type BacktestMetrics, type MonteCarloResult, type WalkForwardResult } from '../lib/types';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect, useCallback } from "react";
+import BacktestPanel from "@/components/BacktestPanel";
+import { BarChart3, Save, Check, Database } from "lucide-react";
+import { fetchKlines } from "@/lib/market";
+import { runBacktest, walkForward, monteCarlo, DEFAULT_BACKTEST } from "@/lib/backtest";
+import { makeDecision } from "@/lib/decision";
+import { listBacktestRuns, saveBacktestRun } from "@/lib/data/backtests.repo";
+import {
+  CRYPTO_INSTRUMENTS,
+  type Candle,
+  type Timeframe,
+  type BacktestMetrics,
+  type MonteCarloResult,
+  type WalkForwardResult,
+} from "@/lib/types";
+import { useAuth } from "@/context/AuthContext";
 
-const SYMBOLS = CRYPTO_INSTRUMENTS.filter((i) => i.live).slice(0, 6).map((i) => i.symbol);
+const SYMBOLS = CRYPTO_INSTRUMENTS.filter((i) => i.live)
+  .slice(0, 6)
+  .map((i) => i.symbol);
 
 export default function BacktestingPage() {
   const { user } = useAuth();
-  const [symbol, setSymbol] = useState('BTCUSDT');
-  const [timeframe, setTimeframe] = useState<Timeframe>('1h');
+  const [symbol, setSymbol] = useState("BTCUSDT");
+  const [timeframe, setTimeframe] = useState<Timeframe>("1h");
   const [candles, setCandles] = useState<Candle[]>([]);
   const [metrics, setMetrics] = useState<BacktestMetrics | null>(null);
   const [wf, setWf] = useState<WalkForwardResult | null>(null);
   const [mc, setMc] = useState<MonteCarloResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [savedRuns, setSavedRuns] = useState<Array<{ id: string; symbol: string; timeframe: string; created_at: string; metrics: BacktestMetrics }>>([]);
+  const [savedRuns, setSavedRuns] = useState<
+    Array<{
+      id: string;
+      symbol: string;
+      timeframe: string;
+      created_at: string;
+      metrics: BacktestMetrics;
+    }>
+  >([]);
   const [caching, setCaching] = useState(false);
   const [cached, setCached] = useState(false);
 
@@ -27,10 +44,14 @@ export default function BacktestingPage() {
     try {
       const data = await fetchKlines(symbol, timeframe, 1000);
       setCandles(data);
-    } catch { setCandles([]); }
+    } catch {
+      setCandles([]);
+    }
   }, [symbol, timeframe]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Load saved backtest runs from DB
   useEffect(() => {
@@ -48,13 +69,16 @@ export default function BacktestingPage() {
       const signalFn = (slice: Candle[]) => {
         if (slice.length < 60) return null;
         const res = makeDecision(slice, null, symbol, timeframe);
-        if (!res || res.recommendation.side === 'neutral') return null;
+        if (!res || res.recommendation.side === "neutral") return null;
         return { side: res.recommendation.side, confidence: Math.abs(res.recommendation.score) };
       };
       const m = runBacktest(candles, signalFn, DEFAULT_BACKTEST);
       const w = walkForward(candles, signalFn, DEFAULT_BACKTEST);
       const c = monteCarlo(m, 1000);
-      setMetrics(m); setWf(w); setMc(c); setLoading(false);
+      setMetrics(m);
+      setWf(w);
+      setMc(c);
+      setLoading(false);
     }, 50);
   };
 
@@ -62,8 +86,12 @@ export default function BacktestingPage() {
     if (!user || !metrics) return;
     setCaching(true);
     await saveBacktestRun(user.id, {
-      symbol, timeframe, strategy: 'ai_ensemble',
-      metrics, walkForward: wf, monteCarlo: mc,
+      symbol,
+      timeframe,
+      strategy: "ai_ensemble",
+      metrics,
+      walkForward: wf,
+      monteCarlo: mc,
     });
     setCaching(false);
     setCached(true);
@@ -72,7 +100,7 @@ export default function BacktestingPage() {
     setSavedRuns(await listBacktestRuns(user.id, 5));
   };
 
-  const loadCachedRun = (run: typeof savedRuns[0]) => {
+  const loadCachedRun = (run: (typeof savedRuns)[0]) => {
     setMetrics(run.metrics);
     setSymbol(run.symbol);
     setTimeframe(run.timeframe as Timeframe);
@@ -88,30 +116,55 @@ export default function BacktestingPage() {
         </div>
         <div>
           <h1 className="text-base font-semibold tracking-tight">Backtesting</h1>
-          <p className="text-xs text-muted mt-0.5">Walk-forward analysis with Monte Carlo simulation</p>
+          <p className="text-xs text-muted mt-0.5">
+            Walk-forward analysis with Monte Carlo simulation
+          </p>
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
-        <select value={symbol} onChange={(e) => setSymbol(e.target.value)}
-          className="px-2.5 py-2 rounded-lg bg-surface border border-border text-text text-sm">
-          {SYMBOLS.map((s) => <option key={s} value={s}>{s}</option>)}
+        <select
+          value={symbol}
+          onChange={(e) => setSymbol(e.target.value)}
+          className="px-2.5 py-2 rounded-lg bg-surface border border-border text-text text-sm"
+        >
+          {SYMBOLS.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
         </select>
-        <select value={timeframe} onChange={(e) => setTimeframe(e.target.value as Timeframe)}
-          className="px-2.5 py-2 rounded-lg bg-surface border border-border text-text text-sm">
-          {['15m', '1h', '4h', '1d'].map((tf) => <option key={tf} value={tf}>{tf}</option>)}
+        <select
+          value={timeframe}
+          onChange={(e) => setTimeframe(e.target.value as Timeframe)}
+          className="px-2.5 py-2 rounded-lg bg-surface border border-border text-text text-sm"
+        >
+          {["15m", "1h", "4h", "1d"].map((tf) => (
+            <option key={tf} value={tf}>
+              {tf}
+            </option>
+          ))}
         </select>
         {metrics && (
-          <button onClick={cacheRun} disabled={caching}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/15 text-primary hover:bg-primary/25 text-xs font-medium disabled:opacity-40 transition-colors">
+          <button
+            onClick={cacheRun}
+            disabled={caching}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/15 text-primary hover:bg-primary/25 text-xs font-medium disabled:opacity-40 transition-colors"
+          >
             {cached ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
-            {cached ? 'Saved' : caching ? 'Saving…' : 'Save Run'}
+            {cached ? "Saved" : caching ? "Saving…" : "Save Run"}
           </button>
         )}
       </div>
 
       <div className="max-w-lg mb-4">
-        <BacktestPanel metrics={metrics} walkForward={wf} monteCarlo={mc} loading={loading} onRun={handleRun} />
+        <BacktestPanel
+          metrics={metrics}
+          walkForward={wf}
+          monteCarlo={mc}
+          loading={loading}
+          onRun={handleRun}
+        />
       </div>
 
       {savedRuns.length > 0 && (
@@ -121,14 +174,20 @@ export default function BacktestingPage() {
           </h3>
           <div className="space-y-1.5">
             {savedRuns.map((run) => (
-              <button key={run.id} onClick={() => loadCachedRun(run)}
-                className="w-full flex items-center gap-3 py-2 px-3 rounded-lg bg-bg/50 hover:bg-bg transition-colors text-xs">
+              <button
+                key={run.id}
+                onClick={() => loadCachedRun(run)}
+                className="w-full flex items-center gap-3 py-2 px-3 rounded-lg bg-bg/50 hover:bg-bg transition-colors text-xs"
+              >
                 <span className="font-medium">{run.symbol}</span>
                 <span className="text-muted">{run.timeframe}</span>
                 <span className="text-muted ml-auto tabular-nums">
-                  Win: {(run.metrics.winRate * 100).toFixed(0)}% · PF: {run.metrics.profitFactor.toFixed(2)} · Sharpe: {run.metrics.sharpe.toFixed(2)}
+                  Win: {(run.metrics.winRate * 100).toFixed(0)}% · PF:{" "}
+                  {run.metrics.profitFactor.toFixed(2)} · Sharpe: {run.metrics.sharpe.toFixed(2)}
                 </span>
-                <span className="text-muted text-[10px]">{new Date(run.created_at).toLocaleDateString()}</span>
+                <span className="text-muted text-[10px]">
+                  {new Date(run.created_at).toLocaleDateString()}
+                </span>
               </button>
             ))}
           </div>
