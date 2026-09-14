@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Wallet, TrendingUp, TrendingDown, X, BarChart3, Clock } from "lucide-react";
 import {
   fetchOpenPositions,
@@ -33,14 +33,17 @@ export default function PortfolioPage() {
     loadData();
   }, [loadData]);
 
-  const positionSymbols = [...new Set(positions.map((p) => p.symbol))];
+  const positionSymbols = useMemo(
+    () => [...new Set(positions.map((position) => position.symbol))],
+    [positions],
+  );
   useEffect(() => {
     if (positionSymbols.length === 0) return;
     const unsub = subscribeLivePrice(positionSymbols, (sym, price) => {
       setLivePrices((prev) => ({ ...prev, [sym]: price }));
     });
     return () => unsub();
-  }, [positionSymbols.join(",")]);
+  }, [positionSymbols]);
 
   const handleClose = async (id: string) => {
     const pos = positions.find((p) => p.id === id);
