@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Star, Plus, X, Search, GripVertical, Trash2 } from "lucide-react";
 import {
   listWatchlists,
@@ -87,14 +87,17 @@ export default function WatchlistPage() {
   }, [activeListId]);
 
   // Subscribe to live prices for items
-  const liveSymbols = items.filter((i) => i.market === "crypto").map((i) => i.symbol);
+  const liveSymbols = useMemo(
+    () => items.filter((item) => item.market === "crypto").map((item) => item.symbol),
+    [items],
+  );
   useEffect(() => {
     if (liveSymbols.length === 0) return;
     const unsub = subscribeLivePrice(liveSymbols, (sym, price) => {
       setLivePrices((prev) => ({ ...prev, [sym]: price }));
     });
     return () => unsub();
-  }, [liveSymbols.join(",")]);
+  }, [liveSymbols]);
 
   const activeList = watchlists.find((l) => l.id === activeListId);
   const filteredInstruments = ALL_INSTRUMENTS.filter((inst) => {

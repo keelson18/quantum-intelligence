@@ -18,6 +18,7 @@ export default function SettingsPage() {
   const { theme, toggle: toggleTheme } = useTheme();
   const { user, role } = useAuth();
   const store = useSettingsStore();
+  const bulkSet = store.bulkSet;
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -27,7 +28,7 @@ export default function SettingsPage() {
       if (!user?.id) return;
       const data = await getUserSettings(user.id);
       if (data) {
-        store.bulkSet({
+        bulkSet({
           defaultTimeframe: data.default_timeframe as Timeframe,
           riskTolerance: data.risk_tolerance as RiskTolerance,
           notifPriceAlerts: data.notif_price_alerts,
@@ -37,7 +38,7 @@ export default function SettingsPage() {
         });
       }
     })();
-  }, [user?.id]);
+  }, [bulkSet, user?.id]);
 
   const saveSettings = useCallback(async () => {
     if (!user) return;
