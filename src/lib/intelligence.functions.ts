@@ -62,7 +62,7 @@ interface Db {
 
 export const persistAnalysisRun = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => persistInput.parse(data))
+  .validator((data) => persistInput.parse(data))
   .handler(async ({ data, context }) => {
     const db = context.supabase as unknown as Db;
     const userId = context.userId;

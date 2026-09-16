@@ -10,7 +10,7 @@ const predictInput = z.object({
 
 export const predictML = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => predictInput.parse(data))
+  .validator((data) => predictInput.parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { runPrediction, consumeRate } = await import("./ml-predict.server");
@@ -29,7 +29,7 @@ export const predictML = createServerFn({ method: "POST" })
 
 export const retrainML = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => predictInput.parse(data))
+  .validator((data) => predictInput.parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { runRetrain, consumeRate } = await import("./ml-predict.server");
@@ -73,7 +73,7 @@ When users ask about specific signals they're seeing, explain what the indicator
 
 export const askCoachFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => coachInput.parse(data))
+  .validator((data) => coachInput.parse(data))
   .handler(async ({ data, context }) => {
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) return { error: "AI coach is not configured." };
